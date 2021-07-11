@@ -20,7 +20,6 @@ Example:
 import datetime
 import io
 import json
- #from MyCredentials import key, url # This is a custom file I wrote that contains my credentials.
 import numpy as np
 import os
 import pandas as pd
@@ -48,6 +47,7 @@ def download_data(directory, years, delete):
     A .csv file in the directory, with the most recent data, if downloaded.
     """
     # Defining Time Variables
+    directory = f'{directory}\\RawData\\'
     current_date = datetime.date.today()
     today = current_date.strftime('%Y%m%d')
     yesterday = current_date - datetime.timedelta(days = 1)
@@ -215,7 +215,7 @@ def clean_data(oe_data, split_on):
     return oe_data
 
 
-def getLastRoster(playerdata, regions):
+def get_last_roster(playerdata, regions):
     """
     Parameters
     ----------
@@ -233,13 +233,16 @@ def getLastRoster(playerdata, regions):
     playerdata = playerdata[['league', 'date', 'team', 'position', 'player']]
     if regions:
         playerdata = playerdata[playerdata['league'].isin(regions)].reset_index()
+        
     lastPlayed = playerdata.sort_values(
         ['date', 'team']).drop_duplicates(
-            subset=['team'], keep='last', ignore_index=True)
-    lastPlayed = lastPlayed['date'].tolist()
-    lastPlayed = min(lastPlayed)
-    lastStarting = playerdata[playerdata['date'] >= lastPlayed].reset_index()
-    lastStarting = list(lastStarting.player.unique())
+            subset=['team'], keep='last', ignore_index=True).reset_index()
+    lastPlayed = lastPlayed[['date', 'team']]
+    
+    output = playerdata.merge(lastPlayed, on=['date', 'team'], 
+                              how='inner').dropna()
+    lastStarting = list(output.player.unique())
+    
     return lastStarting
 
 
@@ -341,31 +344,3 @@ def _upcoming_schedule(leagues, days, url, key):
     upcoming = dict(j for i in upcoming for j in i.items())
     
     return upcoming
-
-def name_change(df, entity, legend):
-    """
-    This function is intended to replace values in the data in the event of 
-    a player or team name change within the dataset.
-    This is particularly useful when looking at multiple splits of data. 
-    
-    For example, if Dignitas renames to Dignitas QNTMPAY, use this function
-    to rename all values of Dignitas to Dignitas QNTMPAY for consistency. 
-
-    Parameters
-    ----------
-    df : Pandas DataFrame
-        A Pandas DataFrame containing Oracles Elixir data.
-    entity : str
-        The name of the column to operate on (e.g. 'team', 'player')
-    legend : dict
-        A dictionary object of format {'old1': 'new1', 'old2':'new2'}
-
-    Returns
-    -------
-    Pandas DataFrame
-        An updated Pandas DataFrame
-            with the values replaced according to the lookup legend provided.
-    """
-    
-    output = df[entity].replace(legend)
-    return output

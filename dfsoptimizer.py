@@ -18,7 +18,59 @@ import random
 import pandas as pd
 import sys
                         
-# Roster Generator
+# Function Library
+def prep_dk_csv(filepath, fadelist):
+    # Import Data From Filepath
+    dk = pd.read_csv(f'{filepath}')
+    
+    # Subset/Format Data
+    dk['Name'] = dk['Name'].str.strip()
+    dk = dk[~dk['Name'].isin(fadelist)]
+    
+    dk1 = dk[~dk['Position'].isin(['TEAM'])]
+    dk1 = dk1.sort_values(['TeamAbbrev', 'Position', 'Name'], 
+                          ignore_index=True)
+    starting = list(dk1.Name.unique())
+    
+    
+    ## Define Daily Matches And Favorites
+    RawMatchList = list(set(dk['Game Info']))
+    dk = dk.drop(columns=['Game Info'])
+    MatchList = []
+    
+    for match in RawMatchList:
+        sep = ' '
+        match = match.split(sep, 1)[0]
+        match = match.replace("@", '" , "')
+        match = '["'+match+'"]'
+        MatchList.append(match)
+        
+    ## Define Daily Matches And Favorites
+    RawMatchList = list(set(dk['Game Info']))
+    dk = dk.drop(columns=['Game Info'])
+    MatchList = []
+    
+    for match in RawMatchList:
+        sep = ' '
+        match = match.split(sep, 1)[0]
+        match = match.replace("@", '" , "')
+        match = '["'+match+'"]'
+        MatchList.append(match)
+    
+    ## Generate Match Evaluation String
+    i = 1
+    MatchString = "{"
+    for match in MatchList:
+        string = "\"game" + str(i) + "\": " + match + ","
+        MatchString = MatchString + string
+        i += 1
+        
+    MatchString = MatchString[:-1] + "}"
+    MatchString = json.loads(MatchString)
+    print('Today\'s games are... ' + str(MatchString) + '\n')
+    
+    return MatchString
+    
 def optimizer(filepath, salarycap=1500000, maxteamsize=3):
     """
     Please note, this is a fairly naive optimizer. 

@@ -180,7 +180,8 @@ def current_year_elo(df, leagues, directory, csv, validate):
     df = eloData.merge(df, how='inner', left_on=['gameid', 'date', 'winner'], 
                        right_on=['gameid', 'date', 'team']).reset_index(drop=True)
     if csv:
-        df.to_csv(f'{directory}teamelo_currentyear.csv', index=False)
+        df.to_csv(f'{directory}\\ModelOutputs\\teamelo_currentyear.csv', 
+                  index=False)
     
     # Elo Validation Formula
     if validate:
@@ -193,7 +194,7 @@ def current_year_elo(df, leagues, directory, csv, validate):
         grf.ax_joint.text(df['winning_elo_before'].mean(), 
                           df['losing_elo_before'].max(), 
                           f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}')
-        grf.savefig(f'{directory}CurrentYearTeamElo_Validation.png', dpi=300, 
+        grf.savefig(f'{directory}\\ModelValidation\\CurrentYearTeamElo_Validation.png', dpi=300, 
                     format='png')
         plt.show()
         plt.clf()
@@ -220,7 +221,7 @@ def current_year_elo(df, leagues, directory, csv, validate):
                                data=league_teamelo, palette='dark')
         pltx.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
         pltx.tick_params(axis='x', labelrotation=40)
-        pltx.figure.savefig(f'{directory}{league}Divergence_CurrentYearElo.png', 
+        pltx.figure.savefig(f'{directory}\\ModelOutputs\\{league}Divergence_CurrentYearElo.png', 
                             dpi=300, format='png', bbox_inches='tight')
         plt.show()
         plt.clf()
@@ -279,7 +280,8 @@ def player_based_elo(df, leagues, players, directory, csv, validate):
     maxyear = df.date.max().year
     df = df[df['date'] > f'{maxyear}-01-01'] # Current Year Only
     if csv:
-        df.to_csv(f'{directory}playerbasedelo_player.csv', index=False)
+        df.to_csv(f'{directory}\\ModelOutputs\\playerbasedelo_player.csv', 
+                  index=False)
     
     # Elo Validation Formula
     if validate:
@@ -299,7 +301,7 @@ def player_based_elo(df, leagues, players, directory, csv, validate):
         grf.ax_joint.text(df['winning_elo_before'].min()*1.02, 
                           (df['losing_elo_before'].max()*0.975), 
                           f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}')
-        grf.savefig(f'{directory}PlayerBasedElo_Validation.png', dpi=300, 
+        grf.savefig(f'{directory}\\ModelValidation\\PlayerBasedElo_Validation.png', dpi=300, 
                     format='png')
         plt.show()
         plt.clf()
@@ -334,7 +336,7 @@ def player_based_elo(df, leagues, players, directory, csv, validate):
         ['player_elo'], ascending=False, ignore_index=True)
     team_elo_playerbased = team_elo_playerbased.rename(columns={'team': 'id'})
     if csv:
-        team_elo_playerbased.to_csv(f'{directory}playerbasedelo_team.csv', 
+        team_elo_playerbased.to_csv(f'{directory}\\ModelOutputs\\playerbasedelo_team.csv', 
                                     index=False)
 
     return team_elo_playerbased, correct
@@ -544,7 +546,8 @@ def team_trueskill(df, leagues, directory, csv, validate):
     egpmdata = lcs_rating.copy()
     
     if csv:
-        lcs_rating.to_csv(f'{directory}team_trueskill.csv', index=False)
+        lcs_rating.to_csv(f'{directory}\\ModelOutputs\\team_trueskill.csv', 
+                          index=False)
         
     # Elo Validation Formula
     if validate:
@@ -568,7 +571,8 @@ def team_trueskill(df, leagues, directory, csv, validate):
         grf.ax_joint.text(lcs_rating['winner_mu'].min()*1.05, 
                           (lcs_rating['loser_mu'].max()*0.975), 
                           f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}')
-        grf.savefig(f'{directory}TrueSkill_Validation.png', dpi=300, format='png')
+        grf.savefig(f'{directory}\\ModelValidation\\TrueSkill_Validation.png', 
+                    dpi=300, format='png')
         plt.show()
         plt.clf()
         
@@ -599,7 +603,8 @@ def team_trueskill(df, leagues, directory, csv, validate):
         'team', keep='last', ignore_index=True)
     output = output.sort_values(['sum_mu'])
     if csv:
-        output.to_csv(f'{directory}trueskill_output.csv', index=False)
+        output.to_csv(f'{directory}\\ModelOutputs\\trueskill_output.csv', 
+                      index=False)
 
     return output, egpmdata, correct
 
@@ -661,7 +666,8 @@ def ewm_modeling(df, directory, csv, leagues):
 
     output = pd.DataFrame(dataset)
     if csv:
-        output.to_csv(f'{directory}side_ewm_data.csv', index=False)
+        output.to_csv(f'{directory}\\ModelOutputs\\side_ewm_data.csv', 
+                      index=False)
     return output
 
 
@@ -729,7 +735,8 @@ def egpm_model(data, directory, leagues, csv, validate):
         grf.ax_joint.text(data['blue_dominance_ema'].min()*1.025, 
                           data['red_dominance_ema'].max()*0.975, 
                           f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}')
-        grf.savefig(f'{directory}EGPM_Dominance_Validation.png', dpi=300, format='png')
+        grf.savefig(f'{directory}\\ModelValidation\\EGPM_Dominance_Validation.png', 
+                    dpi=300, format='png')
         plt.show()
         plt.clf()
     
@@ -752,12 +759,12 @@ def egpm_model(data, directory, leagues, csv, validate):
                  'red_team_result': 'result'})
     merged = pd.concat([blue, red], axis=0)
     if csv:
-        merged.to_csv(f'{directory}EGPM_RawOutput.csv', index=False)
+        merged.to_csv(f'{directory}\\ModelOutputs\\EGPM_RawOutput.csv', index=False)
     output = merged.sort_values(['team', 'date']).drop_duplicates(
         'team', keep='last', ignore_index=True)
 
     if csv:
-        output.to_csv(f'{directory}EGPM_Dominance.csv', index=False)
+        output.to_csv(f'{directory}\\ModelOutputs\\EGPM_Dominance.csv', index=False)
     return output, correct
 
 
