@@ -5,7 +5,9 @@ Please visit and support Oracle's Elixir at www.oracleselixir.com
 
 Currently, the intended audience of this code is for developers and analysts with an academic interest in the professional League of Legends esport. 
 
-There are more people than I can hope to name here who have helped in some way or another in reviewing code, helping me to answer questions, or otherwise providing guidance over the course of the years that I have worked on this code, from the original version that was written in R, to the refactor in Python, and the process of maturing the code and the model. 
+There are more people than I can hope to name here who have helped in some way or another in helping to building out functionality, reviewing code, helping me to answer questions, or otherwise providing guidance over the course of the years that I have worked on this code, from the original version that was written in R, to the refactor in Python, and the process of maturing the code and the model. 
+
+I'd particularly like to thank BuckeyeSundae, TZero, Addie Thompson, and many of the folks in the Oracle's Elixir Data Science community. 
 
 ## Background:
 

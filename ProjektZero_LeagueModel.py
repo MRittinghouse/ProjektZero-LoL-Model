@@ -165,7 +165,7 @@ def main(workingdir=conf.workingdir,
     print(f'{regions} Predictions: \n')
     print(predictions[['blue_team', 'red_team', 'blue_win_pct', 'pred_dev']])
     end = datetime.datetime.now()
-    print(f'\nThis was computed using data up to {start} Eastern Time')
+    print(f'\nThis was computed using data up to {start}')
     print(f'Script Completed in {end - start}')
 
     
