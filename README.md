@@ -1,5 +1,5 @@
 # ProjektZero-LoL-Model
-An attempt at modeling win rates by player and by team for competitive League of Legends. This model is heavily debted to the work of Tim Sevenhuysen at Oracle's Elixir. 
+An attempt at modeling upcoming match probabilities using historic data by player and by team for competitive League of Legends. This model is heavily debted to the work of Tim Sevenhuysen at Oracle's Elixir. 
 
 Please visit and support Oracle's Elixir at www.oracleselixir.com
 
