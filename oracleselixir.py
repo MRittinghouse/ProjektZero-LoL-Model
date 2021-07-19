@@ -81,6 +81,7 @@ def download_data(directory, years, delete):
                 r = requests.get(filepath, allow_redirects=True)
                 data = r.content.decode('utf8')
                 data = pd.read_csv(io.StringIO(data), low_memory=False)
+                assert(len(data) > 9)
                 data.to_csv(f'{directory}{file}{today}.csv', index=False)  
                 print(f'DOWNLOADED: {file}{today}.csv')
              except:
@@ -90,6 +91,7 @@ def download_data(directory, years, delete):
                 r = requests.get(filepath, allow_redirects=True)
                 data = r.content.decode('utf8')
                 data = pd.read_csv(io.StringIO(data), low_memory=False)
+                assert(len(data) > 9)
                 data.to_csv(f'{directory}{file}{yesterday}.csv', index=False)
                 print(f'DOWNLOADED: {file}{yesterday}.csv')
         else:

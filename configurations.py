@@ -26,7 +26,7 @@ Examples would be:
     'LCS' 
     ['LCS', 'LEC', 'LPL', 'LCK']
 """
-regions = ['LCS']
+regions = ['LCS', 'LEC']
 
 """
 Matches is intended to represent a dictionary object. 

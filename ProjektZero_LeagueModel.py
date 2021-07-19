@@ -17,6 +17,8 @@ import os
 import pandas as pd
 import sys
 
+pd.options.display.float_format = "{:,.3f}".format
+
 def main(workingdir=conf.workingdir, 
          regions=conf.regions, 
          matches=conf.matches, 
