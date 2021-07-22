@@ -169,6 +169,16 @@ def main(workingdir=conf.workingdir,
     end = datetime.datetime.now()
     print(f'\nThis was computed using data up to {start}')
     print(f'Script Completed in {end - start}')
+    if predictions:
+        output = f"""```ProjektZero Model's {regions} Upcoming Game Predictions:
+    {predictions[['blue_team', 'red_team', 'blue_win_pct', 'pred_dev']]}
+        
+    This was computed using data up to {start}
+    Please buy me a coffee: https://www.buymeacoffee.com/projektzero
+    ```"""
+    else:
+        output = "No LCS/LEC games in the next 48 hours were found."
+    return (output)
 
     
 if __name__ in ('__builtins__', '__main__'):

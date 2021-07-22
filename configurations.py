@@ -47,8 +47,8 @@ If you are aware of any free, public APIs that can be used to pull down the
 schedule for upcoming matches, please let me know as it would help a lot! 
 """
 try:
+    days = 2 # Sets the time window. e.g: "all matches in the next 3 days"
     from MyCredentials import key, url
-    days = 3 # Sets the time window. e.g: "all matches in the next 3 days"
     matches = oe._upcoming_schedule(regions, days, url, key)
 except Exception as e:
     print(e)
@@ -86,7 +86,7 @@ This is useful if you want to dig into the individual models, or want to
 examine the data with a bit more detail. It's also really useful for 
 troubleshooting bugs. I leave it set to True by default.
 """
-csv = True
+csv = False
 
 """
 Validate is a Boolean variable (True/False) that if True, renders model
@@ -97,7 +97,7 @@ validation is helpful.
 
 Recommended to leave enabled. 
 """
-validate = True
+validate = False
 
 
 

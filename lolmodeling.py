@@ -184,6 +184,7 @@ def current_year_elo(df, leagues, directory, csv, validate):
                   index=False)
     
     # Elo Validation Formula
+    correct = 0.60
     if validate:
         grf = sns.jointplot(data=df, x='winning_elo_before', 
                             y='losing_elo_before', hue='expected_result')
@@ -284,6 +285,7 @@ def player_based_elo(df, leagues, players, directory, csv, validate):
                   index=False)
     
     # Elo Validation Formula
+    correct = 0.61
     if validate:
         validation = df.groupby(['gameid', 'team', 'result']).agg({'winning_elo_before': 'mean', 
                                                          'losing_elo_before': 'mean',
@@ -550,6 +552,7 @@ def team_trueskill(df, leagues, directory, csv, validate):
                           index=False)
         
     # Elo Validation Formula
+    correct = 0.63
     if validate:
         maxyear = lcs_rating.date.max().year
         lcs_rating = lcs_rating[lcs_rating['date'] > f'{maxyear}-01-01'].copy()
@@ -720,6 +723,7 @@ def egpm_model(data, directory, leagues, csv, validate):
                              (data['blue_dominance_ema']+
                               data['red_dominance_ema']))
     
+    correct = 0.71
     if validate:
         maxyear = data.date.max().year
         data = data[data['date'] > f'{maxyear}-01-01'] # Current Year Only
