@@ -20,11 +20,13 @@ Example:
 import datetime
 import io
 import json
-import numpy as np
 import os
+import sys
+
+import numpy as np
 import pandas as pd
 import requests
-import sys
+
 
 # Function Definitions
 def download_data(directory, years, delete):
@@ -37,72 +39,70 @@ def download_data(directory, years, delete):
     year : str or list
         A string or list of strings containing years (e.g. ["2019", "2020"])
     delete : boolean
-        A boolean (True/False) value. 
+        A boolean (True/False) value.
         If True, will delete files in directory upon download of new data.
 
     Returns
     -------
-    A Pandas dataframe containing the most recent Oracle's Elixir data 
+    A Pandas dataframe containing the most recent Oracle's Elixir data
     for the years provided by the year parameter.
     A .csv file in the directory, with the most recent data, if downloaded.
     """
     # Defining Time Variables
-    directory = f'{directory}\\RawData\\'
+    directory = f"{directory}\\RawData\\"
     current_date = datetime.date.today()
-    today = current_date.strftime('%Y%m%d')
-    yesterday = current_date - datetime.timedelta(days = 1)
-    yesterday = yesterday.strftime('%Y%m%d')
-    
+    today = current_date.strftime("%Y%m%d")
+    yesterday = current_date - datetime.timedelta(days=1)
+    yesterday = yesterday.strftime("%Y%m%d")
+
     # Other Variables
-    url = ('https://oracleselixir-downloadable-match-data.'
-        's3-us-west-2.amazonaws.com/')
+    url = "https://oracleselixir-downloadable-match-data." "s3-us-west-2.amazonaws.com/"
     oe_data = pd.DataFrame()
-    
+
     # Conditional Handling For Years
     if isinstance(years, str):
         years = [years]
-    
+
     # Dynamic Data Import
     for year in years:
-        file = f'{year}_LoL_esports_match_data_from_OraclesElixir_'
+        file = f"{year}_LoL_esports_match_data_from_OraclesElixir_"
         current_files = [x for x in os.listdir(directory) if x.startswith(file)]
-        
-        if f'{file}{today}.csv' not in current_files:
-             # If today's data not in Dir, optionally delete old versions
-             if delete:
-                 for f in current_files:
-                     print(f'DELETED: {f}')
-                     os.remove(f'{directory}{f}')
-                
-             try:
+
+        if f"{file}{today}.csv" not in current_files:
+            # If today's data not in Dir, optionally delete old versions
+            if delete:
+                for f in current_files:
+                    print(f"DELETED: {f}")
+                    os.remove(f"{directory}{f}")
+
+            try:
                 # Try To Grab File For Current Date
-                filepath = f'{url}{file}{today}.csv'
-                
+                filepath = f"{url}{file}{today}.csv"
+
                 r = requests.get(filepath, allow_redirects=True)
-                data = r.content.decode('utf8')
+                data = r.content.decode("utf8")
                 data = pd.read_csv(io.StringIO(data), low_memory=False)
-                assert(len(data) > 9)
-                data.to_csv(f'{directory}{file}{today}.csv', index=False)  
-                print(f'DOWNLOADED: {file}{today}.csv')
-             except:
+                assert len(data) > 9
+                data.to_csv(f"{directory}{file}{today}.csv", index=False)
+                print(f"DOWNLOADED: {file}{today}.csv")
+            except:
                 # Grab Yesterday's Data If Today's Does Not Exist
-                filepath = f'{url}{file}{yesterday}.csv'
-            
+                filepath = f"{url}{file}{yesterday}.csv"
+
                 r = requests.get(filepath, allow_redirects=True)
-                data = r.content.decode('utf8')
+                data = r.content.decode("utf8")
                 data = pd.read_csv(io.StringIO(data), low_memory=False)
-                assert(len(data) > 9)
-                data.to_csv(f'{directory}{file}{yesterday}.csv', index=False)
-                print(f'DOWNLOADED: {file}{yesterday}.csv')
+                assert len(data) > 9
+                data.to_csv(f"{directory}{file}{yesterday}.csv", index=False)
+                print(f"DOWNLOADED: {file}{yesterday}.csv")
         else:
             # Grab Local Data If It Exists
-            data = pd.read_csv(f'{directory}{file}{today}.csv', 
-                               low_memory=False)
-            print(f'USING LOCAL {year} DATA')
-        
+            data = pd.read_csv(f"{directory}{file}{today}.csv", low_memory=False)
+            print(f"USING LOCAL {year} DATA")
+
         # Concatenate Data To Master Data Frame
         oe_data = pd.concat([oe_data, data], axis=0)
-    
+
     return oe_data
 
 
@@ -112,63 +112,78 @@ def clean_data(oe_data, split_on):
     ----------
     oe_data : DataFrame
         A Pandas data frame containing Oracle's Elixir data.
-    split_on : 'team', 'player' or None 
+    split_on : 'team', 'player' or None
         Subset data for Team data or Player data. None for all data.
 
     Returns
     -------
-    A Pandas dataframe of formatted, subset Oracle's Elixir data matching 
-    the parameters provided above. 
+    A Pandas dataframe of formatted, subset Oracle's Elixir data matching
+    the parameters provided above.
     The date column will be formatted appropriately as a datetime object.
     Only games with datacompletness = complete will be kept.
-    Any games with 'unknown team' or 'unknown player' will be dropped. 
+    Any games with 'unknown team' or 'unknown player' will be dropped.
     Any games with null game ids will be dropped.
     """
     # Subset Columns and Define Column Data Types
-    oe_data = oe_data[['date', 'gameid', 'datacompleteness', 'side', 
-                       'position', 'league', 'player', 'team', 
-                       'result', 'kills', 'deaths', 'assists', 'earned gpm', 
-                       'gamelength', 'ckpm', 'team kpm']]
-    oe_data = oe_data.astype({'date': 'datetime64'})
-    
+    oe_data = oe_data[
+        [
+            "date",
+            "gameid",
+            "datacompleteness",
+            "side",
+            "position",
+            "league",
+            "player",
+            "team",
+            "result",
+            "kills",
+            "deaths",
+            "assists",
+            "earned gpm",
+            "gamelength",
+            "ckpm",
+            "team kpm",
+        ]
+    ]
+    oe_data = oe_data.astype({"date": "datetime64"})
+
     # Keep Only "Complete" Games
-    oe_data = oe_data[oe_data['datacompleteness'] == 'complete'].copy()
-    oe_data = oe_data.drop(columns=['datacompleteness'], axis=1)
-    
+    oe_data = oe_data[oe_data["datacompleteness"] == "complete"].copy()
+    oe_data = oe_data.drop(columns=["datacompleteness"], axis=1)
+
     # Remove Any Games With Null GameIDs
-    oe_data['gameid'] = oe_data['gameid'].str.strip()
-    oe_data['gameid'].replace('', np.nan, inplace=True)
-    oe_data = oe_data[oe_data['gameid'].notna()]
-    
+    oe_data["gameid"] = oe_data["gameid"].str.strip()
+    oe_data["gameid"].replace("", np.nan, inplace=True)
+    oe_data = oe_data[oe_data["gameid"].notna()]
+
     # Remove Any Records With Null Position Data
-    oe_data['position'].replace('', np.nan, inplace=True)
+    oe_data["position"].replace("", np.nan, inplace=True)
     oe_data = oe_data[oe_data.position.notna()]
-    
+
     # Split On Player/Team (and defining some related variables)
-    if split_on == 'team':
-        oe_data = oe_data[oe_data['position'] == 'team']
+    if split_on == "team":
+        oe_data = oe_data[oe_data["position"] == "team"]
         cap = 2
-        dropval = 'unknown team'
-    elif split_on == 'player':
-        oe_data = oe_data[oe_data['position'] != 'team'].copy()
+        dropval = "unknown team"
+    elif split_on == "player":
+        oe_data = oe_data[oe_data["position"] != "team"].copy()
         cap = 10
-        dropval = 'unknown player'
+        dropval = "unknown player"
     else:
-        raise ValueError('Must split on either player or team.')
-        
+        raise ValueError("Must split on either player or team.")
+
     # Remove Games That Don't Have Data For All Players
-    counts = oe_data['gameid'].value_counts().to_frame()
-    counts = counts[counts['gameid'] < cap]
+    counts = oe_data["gameid"].value_counts().to_frame()
+    counts = counts[counts["gameid"] < cap]
     if len(counts) > 0:
         dropgames = counts.index.to_list()
         oe_data = oe_data[~oe_data.gameid.isin(dropgames)].copy()
-        
+
     # Drop Games With "Unknown Player/Team" Lookup Failures
     dropgames = oe_data[oe_data[split_on] == dropval].copy()
-    dropgames = dropgames['gameid'].unique()
-    oe_data = oe_data[~oe_data.gameid.isin(dropgames)].copy().reset_index(
-        drop=True)
-    
+    dropgames = dropgames["gameid"].unique()
+    oe_data = oe_data[~oe_data.gameid.isin(dropgames)].copy().reset_index(drop=True)
+
     # Generate Opponent Column
     def _get_opponent(column, entity):
         """
@@ -186,33 +201,30 @@ def clean_data(oe_data, split_on):
 
         """
         opponent = []
-        if entity == 'player':
+        if entity == "player":
             gap = 5
-        elif entity == 'team':
+        elif entity == "team":
             gap = 1
         flag = 0
         for i, obj in enumerate(column):
             if flag < gap:
-                opponent.append(column[i+gap])
+                opponent.append(column[i + gap])
                 flag += 1
             elif flag >= gap and flag < (gap * 2):
-                opponent.append(column[i-gap])
+                opponent.append(column[i - gap])
                 flag += 1
             if flag >= (gap * 2):
                 flag = 0
         return opponent
 
-    oe_data = oe_data.sort_values(['league', 'date', 'gameid', 
-                                   'side', 'position'])
-    oe_data['opponent'] = _get_opponent(oe_data[split_on].to_list(), 
-                                        split_on)
-    
-    if split_on == 'player':
-        oe_data['opposing_team'] = _get_opponent(oe_data.team.to_list(), 
-                                                 split_on)
-    elif split_on == 'team':
-        oe_data['opposing_team'] = oe_data['opponent']
-    
+    oe_data = oe_data.sort_values(["league", "date", "gameid", "side", "position"])
+    oe_data["opponent"] = _get_opponent(oe_data[split_on].to_list(), split_on)
+
+    if split_on == "player":
+        oe_data["opposing_team"] = _get_opponent(oe_data.team.to_list(), split_on)
+    elif split_on == "team":
+        oe_data["opposing_team"] = oe_data["opponent"]
+
     # Return Output
     return oe_data
 
@@ -232,34 +244,35 @@ def get_last_roster(playerdata, regions):
         List of players who most recently played with that player.
 
     """
-    playerdata = playerdata[['league', 'date', 'team', 'position', 'player']]
+    playerdata = playerdata[["league", "date", "team", "position", "player"]]
     if regions:
-        playerdata = playerdata[playerdata['league'].isin(regions)].reset_index()
-        
-    lastPlayed = playerdata.sort_values(
-        ['date', 'team']).drop_duplicates(
-            subset=['team'], keep='last', ignore_index=True).reset_index()
-    lastPlayed = lastPlayed[['date', 'team']]
-    
-    output = playerdata.merge(lastPlayed, on=['date', 'team'], 
-                              how='inner').dropna()
+        playerdata = playerdata[playerdata["league"].isin(regions)].reset_index()
+
+    lastPlayed = (
+        playerdata.sort_values(["date", "team"])
+        .drop_duplicates(subset=["team"], keep="last", ignore_index=True)
+        .reset_index()
+    )
+    lastPlayed = lastPlayed[["date", "team"]]
+
+    output = playerdata.merge(lastPlayed, on=["date", "team"], how="inner").dropna()
     lastStarting = list(output.player.unique())
-    
+
     return lastStarting
 
 
 def _upcoming_schedule(leagues, days, url, key):
     """
-    This function pings a currently private API endpoint 
+    This function pings a currently private API endpoint
     to grab a dictionary of upcoming matches.
-    
-    Please note, this API has not yet been released, so if you do not have 
-    a valid key, do not try to use this function. 
+
+    Please note, this API has not yet been released, so if you do not have
+    a valid key, do not try to use this function.
 
     Parameters
     ----------
     leagues : str or list of strings
-        A string or list of strings containing Leagues of interest 
+        A string or list of strings containing Leagues of interest
         Valid Leagues are LCS, LEC, LCK, LPL.
         The API does not support all leagues, stick to the big four.
     days : int
@@ -267,53 +280,56 @@ def _upcoming_schedule(leagues, days, url, key):
     url : str
         The URL of the API to pull data from.
     key : str
-        The private key used to credential your access to the API. 
+        The private key used to credential your access to the API.
 
     Returns
     -------
     upcoming : dict
         A dictionary with the format of {ID: [blue, red]} for upcoming matches.
     """
-    headers = {'x-api-key':f'{key}'}
+    headers = {"x-api-key": f"{key}"}
     current_date = datetime.datetime.now()
-    future_date = current_date + datetime.timedelta(days = days)
-    tformat = '%Y-%m-%dT%H:%M:%S.%fZ'
-    
+    future_date = current_date + datetime.timedelta(days=days)
+    tformat = "%Y-%m-%dT%H:%M:%S.%fZ"
+
     # Get API Response
     res = requests.get(url, headers=headers)
-    
+
     # Get Schedule or Error Response
     if res.status_code == 200:
         schedule = json.loads(res.text)
     else:
-        print(f'Error: {res.status_code}')
+        print(f"Error: {res.status_code}")
         sys.exit(1)
-    
+
     # Conditional Handling For Leagues Input
     if isinstance(leagues, str):
         leagues = [leagues]
-    
+
     # Filter Schedule of Interest
-    league_schedule = list(filter(lambda game: game['league'] in leagues, 
-                                  schedule))
-    upcoming = list(filter(lambda game: 
-                           datetime.datetime.strptime(game['startTime'], 
-                                                tformat) <= future_date and 
-                           datetime.datetime.strptime(game['startTime'], 
-                                                tformat) >= current_date,
-                           league_schedule))
+    league_schedule = list(filter(lambda game: game["league"] in leagues, schedule))
+    upcoming = list(
+        filter(
+            lambda game: datetime.datetime.strptime(game["startTime"], tformat)
+            <= future_date
+            and datetime.datetime.strptime(game["startTime"], tformat) >= current_date,
+            league_schedule,
+        )
+    )
 
     # Misnomers Format: (API Name) : (OE Name)
     # This will need to be regularly monitored and updated.
     # If you get key errors, update this dictionary.
-    misnomers = {'Schalke 04': 'FC Schalke 04 Esports',
-                 'Edward Gaming': 'EDward Gaming',
-                 'kt Rolster': 'KT Rolster',
-                 'TT': 'ThunderTalk Gaming',
-                 'NONGSHIM REDFORCE': 'Nongshim RedForce',
-                 'EXCEL': 'Excel Esports',
-                 'Dignitas': 'Dignitas QNTMPAY'}
-    
+    misnomers = {
+        "Schalke 04": "FC Schalke 04 Esports",
+        "Edward Gaming": "EDward Gaming",
+        "kt Rolster": "KT Rolster",
+        "TT": "ThunderTalk Gaming",
+        "NONGSHIM REDFORCE": "Nongshim RedForce",
+        "EXCEL": "Excel Esports",
+        "Dignitas": "Dignitas QNTMPAY",
+    }
+
     def team_namer(teamname, misnomers):
         """
         Parameters
@@ -336,13 +352,17 @@ def _upcoming_schedule(leagues, days, url, key):
 
     # If this block of code fails, there's a problem with the team names
     for i in upcoming:
-        if i['team1Code'] == 'TBD' or i['team2Code'] == 'TBD':
+        if i["team1Code"] == "TBD" or i["team2Code"] == "TBD":
             upcoming.remove(i)
-    upcoming = map(lambda x: {x['matchId']: [team_namer(x['team1Name'], 
-                                                        misnomers), 
-                                             team_namer(x['team2Name'], 
-                                                        misnomers)]}, 
-                   upcoming)
+    upcoming = map(
+        lambda x: {
+            x["matchId"]: [
+                team_namer(x["team1Name"], misnomers),
+                team_namer(x["team2Name"], misnomers),
+            ]
+        },
+        upcoming,
+    )
     upcoming = dict(j for i in upcoming for j in i.items())
-    
+
     return upcoming

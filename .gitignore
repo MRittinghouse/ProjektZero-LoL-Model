@@ -2,3 +2,4 @@
 MyCredentials.py
 *.pyc
 predictorbot.py
+*env

@@ -6,6 +6,19 @@ These are the core variables that you need to execute the main script.
 """
 # Housekeeping
 import oracleselixir as oe
+from bs4 import BeautifulSoup
+from requests_html import HTMLSession
+
+
+def get_soup(url):
+    s = HTMLSession()
+    response = s.get(url)
+    response.html.render()
+    # give js elements some time to render
+    html_text = response.html.html
+    soup = BeautifulSoup(html_text, "html.parser")
+    return soup
+
 
 # Variable Definitions
 """
@@ -16,7 +29,7 @@ raw data, graphs, model validation metrics, and spreadsheets.
 An example would be: 'C:\\Users\\YourMachineName\Documents\\OraclesElixir'
 Note: Please don't end the path with \\, or things will break.
 """
-workingdir = 'C:\\Users\\matth\Documents\\OraclesElixir'
+workingdir = "C:\\Users\\johnw\\Documents\\Projects\\ProjektZero-LoL-Model"
 
 """
 Regions represents which regions of gameplay / leagues you want to predict.
@@ -26,7 +39,7 @@ Examples would be:
     'LCS' 
     ['LCS', 'LEC', 'LPL', 'LCK']
 """
-regions = ['LCS', 'LEC']
+regions = ["LCS", "LEC", "LPL", "LCK"]
 
 """
 Matches is intended to represent a dictionary object. 
@@ -47,16 +60,53 @@ If you are aware of any free, public APIs that can be used to pull down the
 schedule for upcoming matches, please let me know as it would help a lot! 
 """
 try:
-    days = 2 # Sets the time window. e.g: "all matches in the next 3 days"
+    days = 2  # Sets the time window. e.g: "all matches in the next 3 days"
     from MyCredentials import key, url
+
     matches = oe._upcoming_schedule(regions, days, url, key)
 except Exception as e:
     print(e)
-    matches = {'game1': ['Team Liquid', 'Golden Guardians'], 
-               'game2': ['Cloud9', 'Immortals'],
-               'game3': ['100 Thieves', 'TSM'],
-               'game4': ['Evil Geniuses', 'Cloud9'],
-               'game5': ['Dignitas QNTMPAY', 'Counter Logic Gaming']}
+
+    def __get_next_games(no_of_games: int):
+        url = "https://lolesports.com/schedule?leagues=lcs,lcs-academy,lec,lck"
+        soup = get_soup(url)
+        soup_body = soup.body
+
+        # classes to be used to parse html
+        future_game = "single future event"
+        team1 = "team team1"
+        team2 = "team team2"
+        team_info = "team info"
+        game_number_index = range(1, 1 + no_of_games)
+
+        # change this to
+        games_list = [f"game{i}" for i in game_number_index]
+
+        ten_future_matches = soup.find_all("div", class_=future_game)[0:9]
+
+        team1s = [
+            matches.find_all("div", class_=team1)[0] for matches in ten_future_matches
+        ]
+        team1_names = [
+            matches.find_all("span", class_="name")[0].text for matches in team1s
+        ]
+
+        team2s = [
+            matches.find_all("div", class_=team2)[0] for matches in ten_future_matches
+        ]
+        team2_names = [
+            matches.find_all("span", class_="name")[0].text for matches in team2s
+        ]
+
+        names_combined = [
+            list(both_names) for both_names in zip(team1_names, team2_names)
+        ]
+        matches = dict(zip(games_list, names_combined))
+
+        return matches
+
+        matches = get_next_games(10)
+
 
 """
 The team replacements variable is used to replace values in the data in the 
@@ -69,7 +119,7 @@ name changes in the last two years of gameplay.
 The format is intended to be {'oldname1': 'newname1', 'oldname2': 'newname2'}
 Be sure that the spelling, spacing, and capitalization match Oracle's Elixir.
 """
-team_replacements = {'Dignitas': 'Dignitas QNTMPAY'}
+team_replacements = {"Dignitas": "Dignitas QNTMPAY"}
 
 """
 The player replacements variable used to document upcoming roster changes. 
@@ -78,7 +128,7 @@ If you are aware of an upcoming substitution, fill this dictionary out with
 the format {oldplayer1: newplayer1, oldplayer2: newplayer2, ...}. Be sure that
 the spelling and capitalization are exactly as they are on Oracle's Elixir.
 """
-player_replacements = {'Jenkins': 'Alphari'}
+player_replacements = {"Jenkins": "Alphari"}
 
 """
 CSV is a Boolean (True/False) variable that if True, renders CSV files.
@@ -86,7 +136,7 @@ This is useful if you want to dig into the individual models, or want to
 examine the data with a bit more detail. It's also really useful for 
 troubleshooting bugs. I leave it set to True by default.
 """
-csv = False
+csv = True
 
 """
 Validate is a Boolean variable (True/False) that if True, renders model
@@ -97,7 +147,4 @@ validation is helpful.
 
 Recommended to leave enabled. 
 """
-validate = False
-
-
-
+validate = True
