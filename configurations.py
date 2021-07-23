@@ -6,19 +6,6 @@ These are the core variables that you need to execute the main script.
 """
 # Housekeeping
 import oracleselixir as oe
-from bs4 import BeautifulSoup
-from requests_html import HTMLSession
-
-
-def get_soup(url):
-    s = HTMLSession()
-    response = s.get(url)
-    response.html.render()
-    # give js elements some time to render
-    html_text = response.html.html
-    soup = BeautifulSoup(html_text, "html.parser")
-    return soup
-
 
 # Variable Definitions
 """
@@ -59,53 +46,13 @@ An example dictionary has been provided containing July 11th, 2021's LCS games.
 If you are aware of any free, public APIs that can be used to pull down the
 schedule for upcoming matches, please let me know as it would help a lot! 
 """
+days = 2  # Sets the time window. e.g: "all matches in the next 3 days" (used only in upcoming_schedule)
+games = 5 # Sets the number of games to pull (used only in get_lolesports_next_games)
 try:
-    days = 2  # Sets the time window. e.g: "all matches in the next 3 days"
     from MyCredentials import key, url
-
     matches = oe._upcoming_schedule(regions, days, url, key)
-except Exception as e:
-    print(e)
-
-    def __get_next_games(no_of_games: int):
-        url = "https://lolesports.com/schedule?leagues=lcs,lcs-academy,lec,lck"
-        soup = get_soup(url)
-        soup_body = soup.body
-
-        # classes to be used to parse html
-        future_game = "single future event"
-        team1 = "team team1"
-        team2 = "team team2"
-        team_info = "team info"
-        game_number_index = range(1, 1 + no_of_games)
-
-        # change this to
-        games_list = [f"game{i}" for i in game_number_index]
-
-        ten_future_matches = soup.find_all("div", class_=future_game)[0:9]
-
-        team1s = [
-            matches.find_all("div", class_=team1)[0] for matches in ten_future_matches
-        ]
-        team1_names = [
-            matches.find_all("span", class_="name")[0].text for matches in team1s
-        ]
-
-        team2s = [
-            matches.find_all("div", class_=team2)[0] for matches in ten_future_matches
-        ]
-        team2_names = [
-            matches.find_all("span", class_="name")[0].text for matches in team2s
-        ]
-
-        names_combined = [
-            list(both_names) for both_names in zip(team1_names, team2_names)
-        ]
-        matches = dict(zip(games_list, names_combined))
-
-        return matches
-
-        matches = get_next_games(10)
+except:
+    matches = oe._get_lolesports_next_games(days)
 
 
 """

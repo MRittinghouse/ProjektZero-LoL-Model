@@ -17,16 +17,16 @@ Example:
     data = oe.download_data(dir, years, delete)
 """
 # Housekeeping
+from bs4 import BeautifulSoup
 import datetime
 import io
 import json
-import os
-import sys
-
 import numpy as np
 import pandas as pd
+import os
 import requests
-
+from requests_html import HTMLSession
+import sys
 
 # Function Definitions
 def download_data(directory, years, delete):
@@ -366,3 +366,50 @@ def _upcoming_schedule(leagues, days, url, key):
     upcoming = dict(j for i in upcoming for j in i.items())
 
     return upcoming
+
+
+def _get_soup(url):
+    s = HTMLSession()
+    response = s.get(url)
+    response.html.render()
+    # give js elements some time to render
+    html_text = response.html.html
+    soup = BeautifulSoup(html_text, "html.parser")
+    return soup
+
+
+def _get_lolesports_next_games(games: int):
+    url = "https://lolesports.com/schedule?leagues=lcs,lcs-academy,lec,lck"
+    soup = _get_soup(url)
+
+    # classes to be used to parse html
+    future_game = "single future event"
+    team1 = "team team1"
+    team2 = "team team2"
+    game_number_index = range(1, 1 + games)
+
+    # change this to
+    games_list = [f"game{i}" for i in game_number_index]
+
+    ten_future_matches = soup.find_all("div", class_=future_game)[0:9]
+
+    team1s = [
+        matches.find_all("div", class_=team1)[0] for matches in ten_future_matches
+    ]
+    team1_names = [
+        matches.find_all("span", class_="name")[0].text for matches in team1s
+    ]
+
+    team2s = [
+        matches.find_all("div", class_=team2)[0] for matches in ten_future_matches
+    ]
+    team2_names = [
+        matches.find_all("span", class_="name")[0].text for matches in team2s
+    ]
+
+    names_combined = [
+        list(both_names) for both_names in zip(team1_names, team2_names)
+    ]
+    matches = dict(zip(games_list, names_combined))
+
+    return matches
