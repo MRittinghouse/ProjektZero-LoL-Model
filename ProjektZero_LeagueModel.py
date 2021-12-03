@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-The ProjektZero League of Legends Model
+The ProjektZero League of Legends Model.
 
 Please read the readme on the GitHub page at:
     https://github.com/MRittinghouse/ProjektZero-LoL-Model
-    
+
 Make sure to edit the "configurations.py" file to ensure that you are using
-the correct variables for your environment before you run this! 
+the correct variables for your environment before you run this!
 """
 import datetime
 import lolmodeling
@@ -19,9 +19,11 @@ import sys
 
 pd.options.display.float_format = "{:,.3f}".format
 
-def main(workingdir=conf.workingdir, 
-         regions=conf.regions, 
-         matches=conf.matches, 
+
+def main(workingdir=conf.workingdir,
+         regions=conf.regions,
+         days=conf.days,
+         games=conf.games,
          team_replacements=conf.team_replacements,
          player_replacements=conf.player_replacements,
          model_csvs=conf.csv,
@@ -30,6 +32,12 @@ def main(workingdir=conf.workingdir,
     start = datetime.datetime.now()
     current_year = datetime.date.today().year
     years = [str(current_year), str(current_year - 1)]
+    
+    try:
+        from MyCredentials import key, url
+        matches = oe._upcoming_schedule(regions, days, url, key)
+    except:
+        matches = oe._get_lolesports_next_games(games)
     
     # Data Stewardship
     if not os.path.exists(f'{workingdir}'):
@@ -40,8 +48,8 @@ def main(workingdir=conf.workingdir,
         os.makedirs(f'{workingdir}\\RawData')
     if not os.path.exists(f'{workingdir}\\ModelValidation'):
         os.makedirs(f'{workingdir}\\ModelValidation')
-    if not os.path.exists(f'{workingdir}\\ModelOutputs'):
-        os.makedirs(f'{workingdir}\\ModelOutputs')
+    if not os.path.exists(f'{workingdir}\\ModelData'):
+        os.makedirs(f'{workingdir}\\ModelData')
     
     # Data Imports
     data = oe.download_data(workingdir, years=years, delete=True)
@@ -177,8 +185,8 @@ This was computed using data up to {start}
 Please buy me a coffee: https://www.buymeacoffee.com/projektzero
     ```"""
     else:
-        output = "No LCS/LEC games in the next 48 hours were found."
-    return (output)
+        output = "No games in the next 48 hours were found."
+    return output
 
     
 if __name__ in ('__builtins__', '__main__'):
