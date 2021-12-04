@@ -48,4 +48,12 @@ Be sure that the spelling, spacing, and capitalization match Oracle's Elixir.
 """
 team_replacements = {"Dignitas": "Dignitas QNTMPAY", "eStar": "Ultra Prime"}
 
+"""
+The player replacements variable used to document player NAME changes.
+The codebase in its current form uses a team's last fielded roster.
+If you are aware of an upcoming substitution, fill this dictionary out with
+the format {oldplayer1: newplayer1, oldplayer2: newplayer2, ...}. Be sure that
+the spelling and capitalization are exactly as they are on Oracle's Elixir.
+"""
+player_replacements = None
 

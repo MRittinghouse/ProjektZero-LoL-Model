@@ -36,27 +36,28 @@ def predict_match(blue: Team, red: Team) -> pd.DataFrame:
 
     match = pd.DataFrame({"blue": [blue.name],
                           "red": [red.name],
-                          "team_elo": [elo_prediction(blue.team_elo, red.team_elo)],
                           "player_elo": [elo_prediction(blue.player_elo, red.player_elo)],
-                          "team_trueskill": [trueskill_prediction(blue.team_trueskill_mu, blue.team_trueskill_sigma,
-                                                                  red.team_trueskill_mu, red.team_trueskill_sigma)],
                           "player_trueskill": [trueskill_prediction(blue.player_trueskill_mu,
                                                                     blue.player_trueskill_sigma,
                                                                     red.player_trueskill_mu,
                                                                     red.player_trueskill_sigma)],
                           "egpm_dom": [standard_prediction(blue.egpm_dominance, red.egpm_dominance)],
                           "side_win": [standard_prediction(blue.side_win_rate, red.side_win_rate)]})
-    if blue.team_elo and red.team_elo:
-        match["blue_win_percentage"] = ((match["team_elo"] * 0.11) + (match["player_elo"] * 0.11) +
-                                        (match["team_trueskill"] * 0.125) + (match["player_trueskill"] * 0.125) +
-                                        (match["egpm_dom"] * 0.280) + (match["side_win"] * 0.250))
+    if blue.team_exists and red.team_exists:
+        match["team_elo"] = elo_prediction(blue.team_elo, red.team_elo)
+        match["team_trueskill"] = trueskill_prediction(blue.team_trueskill_mu, blue.team_trueskill_sigma,
+                                                       red.team_trueskill_mu, red.team_trueskill_sigma)
+        match["blue_win_chance"] = ((match["team_elo"] * 0.11) + (match["player_elo"] * 0.11) +
+                                    (match["team_trueskill"] * 0.125) + (match["player_trueskill"] * 0.125) +
+                                    (match["egpm_dom"] * 0.280) + (match["side_win"] * 0.250))
+        match["deviation"] = match[["team_elo", "player_elo", "team_trueskill",
+                                    "player_trueskill", "egpm_dom", "side_win"]].std(axis=1)
     else:
-        match["blue_win_percentage"] = ((match["player_elo"] * 0.325) +
-                                        (match["player_trueskill"] * 0.325) +
-                                        (match["egpm_dom"] * 0.30) +
-                                        (match["side_win"] * 0.05))
-    match["deviation"] = match[["team_elo", "player_elo", "team_trueskill",
-                                "player_trueskill", "egpm_dom", "side_win"]].std(axis=1)
+        match["blue_win_chance"] = ((match["player_elo"] * 0.325) +
+                                    (match["player_trueskill"] * 0.325) +
+                                    (match["egpm_dom"] * 0.30) +
+                                    (match["side_win"] * 0.05))
+        match["deviation"] = match[["player_elo", "player_trueskill", "egpm_dom", "side_win"]].std(axis=1)
 
     return match
 
@@ -196,15 +197,17 @@ def main(blue1: str, blue2: str, blue3: str, blue4: str, blue5: str,
     output = pd.concat([output, match], ignore_index=True)
 
     end = datetime.datetime.now()
+
     output = output[["blue", "red", "blue_win_chance"]]
     output = f"""```ProjektZero Model Predictions:
-{output.copy()}
-Please consider supporting my obsessive coding habit at: https://www.buymeacoffee.com/projektzero```"""
+{output.copy()}"""
 
     if blue.warning:
-        output += f"\n {blue.warning}"
+        output += f"\n{blue.warning}"
     if red.warning:
-        output += f"\n {red.warning}"
+        output += f"\n{red.warning}"
+
+    output += """\n \nPlease consider supporting my obsessive coding habit at: https://www.buymeacoffee.com/projektzero```"""
 
     # Optional Print Statements for troubleshooting
     #with pd.option_context('display.max_rows', None, 'display.max_columns', None):
@@ -214,4 +217,5 @@ Please consider supporting my obsessive coding habit at: https://www.buymeacoffe
     return output
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):
-    main()
+    print(main("Ssumday", "Josedeodo", "Abbedagge", "Totally Broken Name", "huhi",
+               "Impact", "Svenskeren", "Bjergsen", "FBI", "IgNar"))
