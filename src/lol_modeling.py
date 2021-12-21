@@ -16,20 +16,6 @@ for betting/wagers is done entirely at the risk of the end user.
 Nothing in this code or its outputs constitutes financial advice.
 
 This code is intended to be imported into your analytics projects.
-
-Example
--------
-    # Housekeeping
-    import oracles_elixir as oe
-    import lol_modeling
-    import pandas as pd
-
-    # Data Import
-    data = oe.download_data(dir, years, delete)
-    team_data = oe.clean_data(data, split_on='team')
-
-    # EWM Model
-    ewm = lolmodeling.ewm_modeling(team_data)
 """
 # Housekeeping
 import itertools

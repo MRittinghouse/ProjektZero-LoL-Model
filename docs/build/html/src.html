@@ -1,0 +1,613 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>src package &#8212; ProjektZero LoL Model  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/haiku.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="src" href="modules.html" /> 
+  </head><body>
+      <div class="header" role="banner"><h1 class="heading"><a href="index.html">
+          <span>ProjektZero LoL Model  documentation</span></a></h1>
+        <h2 class="heading"><span>src package</span></h2>
+      </div>
+      <div class="topnav" role="navigation" aria-label="top navigation">
+      
+        <p>
+        «&#160;&#160;<a href="modules.html">src</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content" role="main">
+        
+        
+  <section id="src-package">
+<h1>src package<a class="headerlink" href="#src-package" title="Permalink to this headline">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="module-src.data_generator">
+<span id="src-data-generator-module"></span><h2>src.data_generator module<a class="headerlink" href="#module-src.data_generator" title="Permalink to this headline">¶</a></h2>
+<p>Oracle’s Elixir Data Generator.</p>
+<p>This script is intended to represent the main function to update data once per day.
+Right now, it is storing data locally, but in the future it may write a NoSQL db
+to AWS DyanmoDB where it can be leveraged by other querying services.</p>
+<p>This script is intended to be kicked off by a Cron job on a daily basis at 7 AM.</p>
+<p>Please visit and support www.oracleselixir.com
+Tim provides an invaluable service to the League community.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.data_generator.enrich_dataset">
+<span class="sig-prename descclassname"><span class="pre">src.data_generator.</span></span><span class="sig-name descname"><span class="pre">enrich_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">player_data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pandas.core.frame.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">team_data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pandas.core.frame.DataFrame</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">pandas.core.frame.DataFrame</span><span class="p"><span class="pre">,</span> </span><span class="pre">pandas.core.frame.DataFrame</span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#src.data_generator.enrich_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute all enrichment for team and player-based analytics and predictions.
+This includes DraftKings point totals, Team and Player-based elo, TrueSkill, and EGPM dominance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>player_data</strong> (<em>pd.DataFrame</em>) – DataFrame representing the output of oe.clean_data() split by player.</p></li>
+<li><p><strong>team_data</strong> (<em>pd.DataFrame</em>) – DataFrame representing the output of oe.clean_data() split by team.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>team_data</strong> (<em>pd.DataFrame</em>) – DataFrame containing team-based metrics and enrichment.</p></li>
+<li><p><strong>player_data</strong> (<em>pd.DataFrame</em>) – DataFrame containing player-based metrics and enrichment.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.data_generator.main">
+<span class="sig-prename descclassname"><span class="pre">src.data_generator.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#src.data_generator.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-src.dfs_optimizer">
+<span id="src-dfs-optimizer-module"></span><h2>src.dfs_optimizer module<a class="headerlink" href="#module-src.dfs_optimizer" title="Permalink to this headline">¶</a></h2>
+<p>LoL DFS Optimizer</p>
+<p>This script is intended to serve as an optimizer for daily fantasy sports
+games for League of Legends.</p>
+<p>This is for academic purposes only, and has no expectation or guarantee of
+performance. Nothing in this script or its outputs constitutes financial advice.
+The user assumes all risk for any usage of this script.</p>
+<p>This is an early rendition of this script, and is intended to be expanded upon.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.dfs_optimizer.optimizer">
+<span class="sig-prename descclassname"><span class="pre">src.dfs_optimizer.</span></span><span class="sig-name descname"><span class="pre">optimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">salarycap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1500000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxteamsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.dfs_optimizer.optimizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Please note, this is a fairly naive optimizer.
+However, it can be customized. You only need five core columns.
+If you have a custom model you want to plug in, simply overwrite the
+“pts” column with your custom expected point values.</p>
+<p>Additionally, E1 Fantasy does not allow for .csv files to be directly
+downloaded from their site. You may need to build your own .csv file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filepath</strong> (<em>str</em>) – The filepath to a .csv file containing columns [‘role’, ‘player’,
+‘team’, ‘salary’, ‘pts’] columns as shown on E1 Fantasy
+(www.fantasy.esportsone.com/).
+Please note that the data in the ‘role’ column should be in all caps.</p></li>
+<li><p><strong>salarycap</strong> (<em>int</em>) – The total maximum amount of salary that you have to spend on players.</p></li>
+<li><p><strong>maxteamsize</strong> (<em>int</em>) – The maximum number of players permitted from the same team.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>An dict object containing the optimal DFS roster using E1 rules.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.dfs_optimizer.prep_dk_csv">
+<span class="sig-prename descclassname"><span class="pre">src.dfs_optimizer.</span></span><span class="sig-name descname"><span class="pre">prep_dk_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fadelist</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.dfs_optimizer.prep_dk_csv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-src.lol_modeling">
+<span id="src-lol-modeling-module"></span><h2>src.lol_modeling module<a class="headerlink" href="#module-src.lol_modeling" title="Permalink to this headline">¶</a></h2>
+<p>League of Legends Modeling Tools.</p>
+<p>This script is intended to work off of Tim Sevenhuysen’s Oracle’s Elixir data.
+Please visit and support www.oracleselixir.com
+Tim provides an invaluable service to the League community.</p>
+<p>This code is intended to be imported into other Python analytics projects
+It provides a number of tools for statistics and analytics, with the focus
+of generating a probability model to predict win rates between teams.</p>
+<p>Please note that this is purely for academic interests, and this script
+comes with no guarantee or expectation of performance, and any use of it
+for betting/wagers is done entirely at the risk of the end user.
+Nothing in this code or its outputs constitutes financial advice.</p>
+<p>This code is intended to be imported into your analytics projects.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lol_modeling.aggregate_player_elos">
+<span class="sig-prename descclassname"><span class="pre">src.lol_modeling.</span></span><span class="sig-name descname"><span class="pre">aggregate_player_elos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">player_data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pandas.core.frame.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">team_data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pandas.core.frame.DataFrame</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">pandas.core.frame.DataFrame</span><a class="headerlink" href="#src.lol_modeling.aggregate_player_elos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aggregate individual player elos to a mean elo per team per match.
+The output data is team-based and can be joined back to the team dataframe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>player_data</strong> (<em>DataFrame</em>) – DataFrame containing the output of the player_based_elo function.</p></li>
+<li><p><strong>team_data</strong> (<em>DataFrame</em>) – DataFrame containing Oracle’s Elixir data, split by team/match.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>team_data</strong> – DataFrame containing player-based elo for each team for each match.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lol_modeling.dk_enrich">
+<span class="sig-prename descclassname"><span class="pre">src.lol_modeling.</span></span><span class="sig-name descname"><span class="pre">dk_enrich</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">oe_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lol_modeling.dk_enrich" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate DraftKings point values for a player or team.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>oe_data</strong> (<em>DataFrame</em>) – A Pandas data frame containing cleaned Oracle’s Elixir data.</p></li>
+<li><p><strong>entity</strong> (<em>'team'</em><em> or </em><em>'player'</em>) – Calculate DK points using Team scoring or Player scoring.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A Pandas dataframe containing all of the original data from the cleaned</em></p></li>
+<li><p><em>OE input plus an added column containing DraftKings points for each game.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lol_modeling.egpm_model">
+<span class="sig-prename descclassname"><span class="pre">src.lol_modeling.</span></span><span class="sig-name descname"><span class="pre">egpm_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pandas.core.frame.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">pandas.core.frame.DataFrame</span><a class="headerlink" href="#src.lol_modeling.egpm_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate a model based on Earned GPM with TrueSkill factored in.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>DataFrame</em>) – Oracle’s Elixir data as provided by the output of the Team TrueSkill function.</p></li>
+<li><p><strong>entity</strong> (<em>str</em>) – Entity to compute on, either “Team” or “Player”</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>DataFrame with Earned Gold Per Minute vs Opponent Team Strength model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lol_modeling.elo_calculator">
+<span class="sig-prename descclassname"><span class="pre">src.lol_modeling.</span></span><span class="sig-name descname"><span class="pre">elo_calculator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pandas.core.frame.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_elo</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">28</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">pandas.core.frame.DataFrame</span><a class="headerlink" href="#src.lol_modeling.elo_calculator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate elo from Pandas dataframe.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.lol_modeling.df">
+<span class="sig-prename descclassname"><span class="pre">src.lol_modeling.</span></span><span class="sig-name descname"><span class="pre">df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lol_modeling.df" title="Permalink to this definition">¶</a></dt>
+<dd><p>and losing opponent [‘opponent’] in order by game date</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>must contain winning team [‘team’]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.lol_modeling.entity">
+<span class="sig-prename descclassname"><span class="pre">src.lol_modeling.</span></span><span class="sig-name descname"><span class="pre">entity</span></span><a class="headerlink" href="#src.lol_modeling.entity" title="Permalink to this definition">¶</a></dt>
+<dd><p>The entity to calculate elo upon (team or player)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str (“team” or “player”)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.lol_modeling.start_elo">
+<span class="sig-prename descclassname"><span class="pre">src.lol_modeling.</span></span><span class="sig-name descname"><span class="pre">start_elo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optional</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lol_modeling.start_elo" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>identifies the starting Elo (default=1200)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.lol_modeling.k">
+<span class="sig-prename descclassname"><span class="pre">src.lol_modeling.</span></span><span class="sig-name descname"><span class="pre">k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optional</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.lol_modeling.k" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>provides the k-factor for the calcuation (default=28)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lol_modeling.ewm_model">
+<span class="sig-prename descclassname"><span class="pre">src.lol_modeling.</span></span><span class="sig-name descname"><span class="pre">ewm_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pandas.core.frame.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">entity</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">pandas.core.frame.DataFrame</span><a class="headerlink" href="#src.lol_modeling.ewm_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate an Exponentially Weighted Mean (EWM) model for side win rates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>DataFrame</em>) – DataFrame containing Team Data as from oe_data import split on team.</p></li>
+<li><p><strong>entity</strong> (<em>str</em>) – Entity to compute ewm modeling on (“Team” or “Player”).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>output</strong> – A DataFrame containing the EWM model output for each team.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lol_modeling.player_elo">
+<span class="sig-prename descclassname"><span class="pre">src.lol_modeling.</span></span><span class="sig-name descname"><span class="pre">player_elo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pandas.core.frame.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">28</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">pandas.core.frame.DataFrame</span><a class="headerlink" href="#src.lol_modeling.player_elo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate elo for a player dataframe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>DataFrame</em>) – Pandas DataFrame containing OE player data.</p></li>
+<li><p><strong>start</strong> (<em>Integer</em>) – Integer value representing the starting / initial elo value.</p></li>
+<li><p><strong>k</strong> (<em>Integer</em>) – Integer representing how much elo is gained/lost per match.
+Testing suggests that 28 is an appropriate score for League games.
+Please research how elo is calculated before you modify.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A Pandas dataframe containing the elo scores per match by player.</em></p></li>
+<li><p><em>This dataframe is an expansion of the player data input.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lol_modeling.q10">
+<span class="sig-prename descclassname"><span class="pre">src.lol_modeling.</span></span><span class="sig-name descname"><span class="pre">q10</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pandas.core.series.Series</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">pandas.core.series.Series</span><a class="headerlink" href="#src.lol_modeling.q10" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the 10th percentile of a Numpy series.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lol_modeling.q90">
+<span class="sig-prename descclassname"><span class="pre">src.lol_modeling.</span></span><span class="sig-name descname"><span class="pre">q90</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pandas.core.series.Series</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">pandas.core.series.Series</span><a class="headerlink" href="#src.lol_modeling.q90" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the 90th percentile of a Numpy series.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lol_modeling.std">
+<span class="sig-prename descclassname"><span class="pre">src.lol_modeling.</span></span><span class="sig-name descname"><span class="pre">std</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">int</span><a class="headerlink" href="#src.lol_modeling.std" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the standard deviation of X using Numpy.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lol_modeling.team_elo">
+<span class="sig-prename descclassname"><span class="pre">src.lol_modeling.</span></span><span class="sig-name descname"><span class="pre">team_elo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pandas.core.frame.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">28</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">pandas.core.frame.DataFrame</span><a class="headerlink" href="#src.lol_modeling.team_elo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate team elo across a dataframe of Oracle’s Elixir data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>DataFrame</em>) – Pandas DataFrame containing OE team data.</p></li>
+<li><p><strong>start</strong> (<em>Integer</em>) – Integer value representing the starting / initial elo value.</p></li>
+<li><p><strong>k</strong> (<em>Integer</em>) – Integer representing how much elo is gained/lost per match.
+Testing suggests that 28 is an appropriate score for League games.
+Please research how elo is calculated before you modify.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>league specified within the leagues parameter.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A Pandas dataframe containing the latest elo scores for the teams in the</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.lol_modeling.trueskill_model">
+<span class="sig-prename descclassname"><span class="pre">src.lol_modeling.</span></span><span class="sig-name descname"><span class="pre">trueskill_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">player_data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pandas.core.frame.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">team_data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pandas.core.frame.DataFrame</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">pandas.core.frame.DataFrame</span><a class="headerlink" href="#src.lol_modeling.trueskill_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate team ranking using Microsoft’s TrueSkill 1 algorithm.
+Reference: <a class="reference external" href="https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/">https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>player_data</strong> (<em>DataFrame</em>) – Pandas DataFrame containing Oracle’s Elixir player data.</p></li>
+<li><p><strong>team_data</strong> (<em>DataFrame</em>) – Pandas DataFrame containing Oracle’s Elixir team data.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A Pandas dataframe containing the latest TrueSkill scores for the TEAMS</em> – in the league specified within the leagues parameter.</p></li>
+<li><p><em>This will be an expanded version of the team_data input.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.match_predictor">
+<span id="src-match-predictor-module"></span><h2>src.match_predictor module<a class="headerlink" href="#module-src.match_predictor" title="Permalink to this headline">¶</a></h2>
+<p>Oracle’s Elixir Match Predictor</p>
+<p>This script is intended to query the data lake and predict upcoming games.</p>
+<p>Please visit and support www.oracleselixir.com
+Tim provides an invaluable service to the League community.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.match_predictor.Bo3">
+<span class="sig-prename descclassname"><span class="pre">src.match_predictor.</span></span><span class="sig-name descname"><span class="pre">Bo3</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t1name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t1odds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t2name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t2odds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.match_predictor.Bo3" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predict the outcome of a Best of 3 series with game odds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t1name</strong> (<em>str</em>) – Team 1 Name.</p></li>
+<li><p><strong>t1odds</strong> (<em>float</em>) – Team 1 Odds.</p></li>
+<li><p><strong>t2name</strong> (<em>str</em>) – Team 2 Name.</p></li>
+<li><p><strong>t2odds</strong> (<em>float</em>) – Team 2 Odds.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A string containing predictions and outputs for a Best of 3 series.</em></p></li>
+<li><p><em>Yields both the overall win likelihood, and game score probabilities.</em></p></li>
+<li><p><em>This is performed by taking the model output odds and applying basic</em> – multiple probability formulae.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.match_predictor.Bo5">
+<span class="sig-prename descclassname"><span class="pre">src.match_predictor.</span></span><span class="sig-name descname"><span class="pre">Bo5</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t1name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t1odds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t2name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t2odds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.match_predictor.Bo5" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predict the results of a Best of 5 series using single game probability.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t1name</strong> (<em>str</em>) – Team 1 Name.</p></li>
+<li><p><strong>t1odds</strong> (<em>float</em>) – Team 1 Odds.</p></li>
+<li><p><strong>t2name</strong> (<em>str</em>) – Team 2 Name.</p></li>
+<li><p><strong>t2odds</strong> (<em>float</em>) – Team 2 Odds.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A string containing predictions and outputs for a Best of 5 series.</em></p></li>
+<li><p><em>Yields both the overall win likelihood, and game score probabilities.</em></p></li>
+<li><p><em>This is performed by taking the model output odds and applying basic</em> – multiple probability formulae.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.match_predictor.main">
+<span class="sig-prename descclassname"><span class="pre">src.match_predictor.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">blue1</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blue2</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blue3</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blue4</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blue5</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">red1</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">red2</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">red3</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">red4</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">red5</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.match_predictor.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.match_predictor.predict_match">
+<span class="sig-prename descclassname"><span class="pre">src.match_predictor.</span></span><span class="sig-name descname"><span class="pre">predict_match</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">blue</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#src.team.Team" title="src.team.Team"><span class="pre">src.team.Team</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">red</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#src.team.Team" title="src.team.Team"><span class="pre">src.team.Team</span></a></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">pandas.core.frame.DataFrame</span><a class="headerlink" href="#src.match_predictor.predict_match" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-src.model_validator">
+<span id="src-model-validator-module"></span><h2>src.model_validator module<a class="headerlink" href="#module-src.model_validator" title="Permalink to this headline">¶</a></h2>
+</section>
+<section id="module-src.oracles_elixir">
+<span id="src-oracles-elixir-module"></span><h2>src.oracles_elixir module<a class="headerlink" href="#module-src.oracles_elixir" title="Permalink to this headline">¶</a></h2>
+<p>Oracle’s Elixir</p>
+<p>This script is designed to connect to Tim Sevenhuysen’s Oracle’s Elixir site to pull down and format data.
+It is built to empower esports enthusiasts, data scientists, or anyone to leverage pro game data
+for use in their own scripts and analytics.</p>
+<p>Please visit and support www.oracleselixir.com
+Tim provides an invaluable service to the League community.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.oracles_elixir.clean_data">
+<span class="sig-prename descclassname"><span class="pre">src.oracles_elixir.</span></span><span class="sig-name descname"><span class="pre">clean_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">oe_data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">pandas.core.frame.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split_on</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">team_replacements</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">player_replacements</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">pandas.core.frame.DataFrame</span><a class="headerlink" href="#src.oracles_elixir.clean_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Format and clean data from Oracle’s Elixir.
+This function is optional, and provided as a convenience to help make the data more consistent and user-friendly.</p>
+<p>The date column will be formatted appropriately as a datetime object.
+Only games with datacompletness = complete will be kept.
+Any games with ‘unknown team’ or ‘unknown player’ will be dropped.
+Any games with null game ids will be dropped.
+Opponent metrics will be enriched into the dataframe.
+This function also subsets the dataset down to relevant columns for the entity you split on (team, player).
+Please note that this means not all columns from the initial data set are in the “cleaned” output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>oe_data</strong> (<em>DataFrame</em>) – A Pandas data frame containing Oracle’s Elixir data.</p></li>
+<li><p><strong>split_on</strong> (<em>'team'</em><em>, </em><em>'player'</em><em> or </em><em>None</em>) – Subset data for Team data or Player data. None for all data.</p></li>
+<li><p><strong>team_replacements</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – Replacement values to normalize team names in the data if a team name changes over time.
+The format is intended to be {‘oldname1’: ‘newname1’, ‘oldname2’: ‘newname2’}</p></li>
+<li><p><strong>player_replacements</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – Replacement values to normalize player names in the data if a player’s name changes over time.
+The format is intended to be {‘oldname1’: ‘newname1’, ‘oldname2’: ‘newname2’}</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A Pandas dataframe of formatted, subset Oracle’s Elixir data matching</em></p></li>
+<li><p><em>the parameters provided above.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.oracles_elixir.download_data">
+<span class="sig-prename descclassname"><span class="pre">src.oracles_elixir.</span></span><span class="sig-name descname"><span class="pre">download_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">years</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">,</span> </span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">[2021]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delete</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">pandas.core.frame.DataFrame</span><a class="headerlink" href="#src.oracles_elixir.download_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download game data from Oracle’s Elixir.
+This interface will help set up the directory for you, remove old data files, and pull the latest data.
+The data will be automatically saved for you as a .csv file, and the function returns a Pandas dataframe
+that is ready for use in additional analytics.
+If up-to-date local data is already present, this function will simply import that to reduce download volumes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>delete</strong> (<em>boolean</em>) – If True, will delete files in directory upon download of new data.</p></li>
+<li><p><strong>years</strong> (<em>Union</em><em>[</em><em>list</em><em>, </em><em>str</em><em>, </em><em>int</em><em>]</em>) – A string or list of strings containing years (e.g. [“2019”, “2020”])
+If nothing is specified, returns the current year only by default.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A Pandas dataframe containing the most recent Oracle’s Elixir data</em></p></li>
+<li><p><em>for the years provided by the year parameter.</em></p></li>
+<li><p><em>A .csv file in the directory, with the most recent data, if downloaded.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.schedule_generator">
+<span id="src-schedule-generator-module"></span><h2>src.schedule_generator module<a class="headerlink" href="#module-src.schedule_generator" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="src.schedule_generator.main">
+<span class="sig-prename descclassname"><span class="pre">src.schedule_generator.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#src.schedule_generator.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.schedule_generator.upcoming_schedule">
+<span class="sig-prename descclassname"><span class="pre">src.schedule_generator.</span></span><span class="sig-name descname"><span class="pre">upcoming_schedule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">leagues</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">misnomer_lookup</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_url</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_key</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">days</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">7</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">dict</span><a class="headerlink" href="#src.schedule_generator.upcoming_schedule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pings an API endpoint to grab a dictionary of upcoming matches.
+Please note, this API has not yet been released, so if you do not have
+a valid key, do not try to use this function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>leagues</strong> (<em>str</em><em> or </em><em>list of strings</em>) – A string or list of strings containing Leagues of interest
+Valid Leagues are LCS, LEC, LCK, LPL.
+The API does not support all leagues, stick to the big four.</p></li>
+<li><p><strong>misnomer_lookup</strong> (<em>dict</em>) – A dictionary containing lookup values to correct inconsistencies between API and OE.</p></li>
+<li><p><strong>api_url</strong> (<em>str</em>) – The URL of the API to pull data from.</p></li>
+<li><p><strong>api_key</strong> (<em>str</em>) – The private key used to credential your access to the API.</p></li>
+<li><p><strong>days</strong> (<em>int</em>) – Number of days forward to search for matches (today + X days).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>upcoming</strong> – A dictionary with the format of {ID: [blue, red]} for upcoming matches.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="src.schedule_generator.url">
+<span class="sig-prename descclassname"><span class="pre">src.schedule_generator.</span></span><span class="sig-name descname"><span class="pre">url</span></span><em class="property"> <span class="pre">=</span> <span class="pre">'https://oe.datalisk.io/matches/upcomingMatches'</span></em><a class="headerlink" href="#src.schedule_generator.url" title="Permalink to this definition">¶</a></dt>
+<dd><p>(OE Name)
+This will need to be regularly monitored and updated.
+If you get key errors, update this dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Misnomers Format</p>
+</dd>
+<dt class="field-even">Type</dt>
+<dd class="field-even"><p>(API Name)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-src.team">
+<span id="src-team-module"></span><h2>src.team module<a class="headerlink" href="#module-src.team" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="src.team.Team">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">src.team.</span></span><span class="sig-name descname"><span class="pre">Team</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">NoneType</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">side</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">NoneType</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">NoneType</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jng</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">NoneType</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mid</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">NoneType</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bot</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">NoneType</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sup</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">NoneType</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warning</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">NoneType</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#src.team.Team" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.team.Team.bot">
+<span class="sig-name descname"><span class="pre">bot</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#src.team.Team.bot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.team.Team.jng">
+<span class="sig-name descname"><span class="pre">jng</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#src.team.Team.jng" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.team.Team.mid">
+<span class="sig-name descname"><span class="pre">mid</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#src.team.Team.mid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.team.Team.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#src.team.Team.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.team.Team.side">
+<span class="sig-name descname"><span class="pre">side</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#src.team.Team.side" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.team.Team.sup">
+<span class="sig-name descname"><span class="pre">sup</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#src.team.Team.sup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.team.Team.top">
+<span class="sig-name descname"><span class="pre">top</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">None</span></em><a class="headerlink" href="#src.team.Team.top" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.team.Team.warning">
+<span class="sig-name descname"><span class="pre">warning</span></span><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">''</span></em><a class="headerlink" href="#src.team.Team.warning" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-src">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-src" title="Permalink to this headline">¶</a></h2>
+</section>
+</section>
+
+
+      </div>
+      <div class="bottomnav" role="navigation" aria-label="bottom navigation">
+      
+        <p>
+        «&#160;&#160;<a href="modules.html">src</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="index.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, MRittinghouse.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.2.
+    </div>
+  </body>
+</html>

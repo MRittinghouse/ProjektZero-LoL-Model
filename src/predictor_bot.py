@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-LoL Predictor Discord Bot
-Created by ProjektZero
-07/21/2021
-
 This bot is a wrapper for my League of Legends esports prediction model.
 It is intended to allow users to call down predictions. 
 """

@@ -1,26 +1,12 @@
 """
 Oracle's Elixir
 
-This script is designed to connect to Tim Sevenhuysen's Oracle's Elixir site
-    to pull down and format data.
-It is built to empower esports enthusiasts, data scientists, or anyone to leverage
-    pro game data for use in their own scripts and analytics.
+This script is designed to connect to Tim Sevenhuysen's Oracle's Elixir site to pull down and format data.
+It is built to empower esports enthusiasts, data scientists, or anyone to leverage pro game data
+for use in their own scripts and analytics.
 
 Please visit and support www.oracleselixir.com
 Tim provides an invaluable service to the League community.
-
-
-Example:
--------
-    import oracleselixir as oe
-    import pandas as pd
-
-    data = oe.download_data(directory = 'C:\\Users\\ProjektStation\\Documents\\OraclesElixir\\',
-                            delete=True,
-                            years=[2020, 2021])
-
-    player_data = oe.clean_data(data, split_on='player')
-    team_data = oe.clean_data(data, split_on='team')
 """
 # Housekeeping
 import datetime as dt
@@ -92,7 +78,7 @@ def download_data(years: Optional[Union[list, str, int]] = [dt.date.today().year
     Download game data from Oracle's Elixir.
     This interface will help set up the directory for you, remove old data files, and pull the latest data.
     The data will be automatically saved for you as a .csv file, and the function returns a Pandas dataframe
-        that is ready for use in additional analytics.
+    that is ready for use in additional analytics.
     If up-to-date local data is already present, this function will simply import that to reduce download volumes.
 
     Parameters
@@ -183,7 +169,7 @@ def clean_data(oe_data: pd.DataFrame,
     Any games with null game ids will be dropped.
     Opponent metrics will be enriched into the dataframe.
     This function also subsets the dataset down to relevant columns for the entity you split on (team, player).
-        Please note that this means not all columns from the initial data set are in the "cleaned" output.
+    Please note that this means not all columns from the initial data set are in the "cleaned" output.
 
     Parameters
     ----------
