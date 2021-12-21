@@ -189,7 +189,7 @@ def clean_data(oe_data: pd.DataFrame,
     A Pandas dataframe of formatted, subset Oracle's Elixir data matching
     the parameters provided above.
     """
-    filepath = Path.cwd().parent
+    filepath = Path.cwd().parent.joinpath('data', 'interim')
 
     # Preliminary Data Type Formatting
     oe_data = oe_data.astype({"date": "datetime64",
@@ -198,7 +198,7 @@ def clean_data(oe_data: pd.DataFrame,
                               "teamid": "str"})
 
     # Keep Only "Complete" Games
-    oe_data = oe_data[oe_data["datacompleteness"] == "complete"].copy()
+    oe_data = oe_data[oe_data["datacompleteness"] != "partial"].copy()
     oe_data = oe_data.drop(columns=["datacompleteness"], axis=1)
 
     # Format IDs & Remove Any Games With Null GameIDs
@@ -254,7 +254,7 @@ def clean_data(oe_data: pd.DataFrame,
     if len(counts) > 0:
         drop_games = counts.index.to_list()
         drops = oe_data[oe_data.gameid.isin(drop_games)].copy()
-        drops.to_csv(filepath.joinpath(f"counts_{split_on}_test.csv"),
+        drops.to_csv(filepath.joinpath(f"dropped_{split_on}.csv"),
                      index=False)
         oe_data = oe_data[~oe_data.gameid.isin(drop_games)].copy()
 

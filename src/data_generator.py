@@ -108,7 +108,6 @@ def main():
 
     # Clean/Format Data
     teams = oe.clean_data(data, split_on='team')
-
     players = oe.clean_data(data, split_on='player')
 
     # Enrich Data
