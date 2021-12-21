@@ -28,44 +28,13 @@ import io
 import numpy as np
 import os
 import pandas as pd
+from pathlib import Path
 import requests
+import sys
 from typing import Optional, Union
 
 
 # Utility/Helper Function Definitions
-def _directory_setup(directory: str):
-    """
-    Check for and create the folders and subfolders used by this codebase.
-    This is a housekeeping action, but helpful for keeping outputs and models organized.
-    If you are only looking to download the data, some of these directories will not be used.
-    However, if you utilize the full League Model, then all of these directories will be needed.
-
-    Parameters
-    ----------
-    directory : str
-        String containing the desired folder path to contain data.
-
-    Returns
-    -------
-    Generates folders relevant for Oracle's Elixir data analysis.
-    Creates the main folder, as named by directory, with subfolders:
-        - Predictions
-        - RawData
-        - ModelValidation
-        - ModelData
-    """
-    if not os.path.exists(f'{directory}'):
-        os.makedirs(f'{directory}')
-    if not os.path.exists(f'{directory}\\Predictions'):
-        os.makedirs(f'{directory}\\Predictions')
-    if not os.path.exists(f'{directory}\\RawData'):
-        os.makedirs(f'{directory}\\RawData')
-    if not os.path.exists(f'{directory}\\ModelValidation'):
-        os.makedirs(f'{directory}\\ModelValidation')
-    if not os.path.exists(f'{directory}\\ModelData'):
-        os.makedirs(f'{directory}\\ModelData')
-
-
 def _get_opponent(column: pd.Series, entity: str) -> list:
     """
     Generate value for the opposing team or player.
@@ -117,9 +86,8 @@ def _get_opponent(column: pd.Series, entity: str) -> list:
 
 
 # Primary Functions
-def download_data(directory: str,
-                  delete: Optional[bool] = True,
-                  years: Optional[Union[list, str, int]] = [dt.date.today().year]) -> pd.DataFrame:
+def download_data(years: Optional[Union[list, str, int]] = [dt.date.today().year],
+                  delete: Optional[bool] = True) -> pd.DataFrame:
     r"""
     Download game data from Oracle's Elixir.
     This interface will help set up the directory for you, remove old data files, and pull the latest data.
@@ -129,9 +97,6 @@ def download_data(directory: str,
 
     Parameters
     ----------
-    directory : str
-        A string containing the filepath to the working directory.
-        (e.g. 'C:\\Users\\ProjektStation\\Documents\\OraclesElixir\\')
     delete : boolean
         If True, will delete files in directory upon download of new data.
     years : Union[list, str, int]
@@ -144,11 +109,9 @@ def download_data(directory: str,
     for the years provided by the year parameter.
     A .csv file in the directory, with the most recent data, if downloaded.
     """
-    # Set Up Working Directory
-    _directory_setup(directory)
-
     # Defining Time Variables
-    directory = f"{directory}\\RawData\\"
+    directory = Path.cwd().parent.joinpath('data', 'raw')
+
     current_date = dt.date.today()
     today = current_date.strftime("%Y%m%d")
     yesterday = current_date - dt.timedelta(days=1)
@@ -166,15 +129,14 @@ def download_data(directory: str,
     # Dynamic Data Import
     for year in years:
         file = f"{year}_LoL_esports_match_data_from_OraclesElixir_"
-        current_files = [x for x in os.listdir(directory)
-                         if x.startswith(file)]
+        current_files = [x for x in os.listdir(directory) if x.startswith(file)]
 
         if f"{file}{today}.csv" not in current_files:
             # If today's data not in Dir, optionally delete old versions
             if delete:
                 for f in current_files:
                     print(f"DELETED: {f}")
-                    os.remove(f"{directory}{f}")
+                    os.remove(directory.joinpath(f))
             try:
                 # Try To Grab File For Current Date
                 filepath = f"{url}{file}{today}.csv"
@@ -183,7 +145,7 @@ def download_data(directory: str,
                 data = r.content.decode("utf8")
                 data = pd.read_csv(io.StringIO(data), low_memory=False)
                 assert len(data) > 9
-                data.to_csv(f"{directory}{file}{today}.csv", index=False)
+                data.to_csv(directory.joinpath(f"{file}{today}.csv"), index=False)
                 print(f"DOWNLOADED: {file}{today}.csv")
             except Exception as e:
                 # Grab Yesterday's Data If Today's Does Not Exist
@@ -193,13 +155,12 @@ def download_data(directory: str,
                 data = r.content.decode("utf8")
                 data = pd.read_csv(io.StringIO(data), low_memory=False)
                 assert len(data) > 9
-                data.to_csv(f"{directory}{file}{yesterday}.csv", index=False)
+                data.to_csv(directory.joinpath(f"{file}{yesterday}.csv"), index=False)
                 print(e)
                 print(f"DOWNLOADED: {file}{yesterday}.csv")
         else:
             # Grab Local Data If It Exists
-            data = pd.read_csv(f"{directory}{file}{today}.csv",
-                               low_memory=False)
+            data = pd.read_csv(directory.joinpath(f"{file}{today}.csv"), low_memory=False)
             print(f"USING LOCAL {year} DATA")
 
         # Concatenate Data To Master Data Frame
@@ -210,8 +171,8 @@ def download_data(directory: str,
 
 def clean_data(oe_data: pd.DataFrame,
                split_on: Optional[str],
-               team_replacements: Optional[dict],
-               player_replacements: Optional[dict]) -> pd.DataFrame:
+               team_replacements: Optional[dict] = None,
+               player_replacements: Optional[dict] = None) -> pd.DataFrame:
     """
     Format and clean data from Oracle's Elixir.
     This function is optional, and provided as a convenience to help make the data more consistent and user-friendly.
@@ -242,6 +203,8 @@ def clean_data(oe_data: pd.DataFrame,
     A Pandas dataframe of formatted, subset Oracle's Elixir data matching
     the parameters provided above.
     """
+    filepath = Path.cwd().parent
+
     # Preliminary Data Type Formatting
     oe_data = oe_data.astype({"date": "datetime64",
                               "gameid": "str",
@@ -305,7 +268,8 @@ def clean_data(oe_data: pd.DataFrame,
     if len(counts) > 0:
         drop_games = counts.index.to_list()
         drops = oe_data[oe_data.gameid.isin(drop_games)].copy()
-        drops.to_csv(f'C:\\Users\\matth\\Documents\\OraclesElixir\\ModelData\\counts_{split_on}_test.csv', index=False)
+        drops.to_csv(filepath.joinpath(f"counts_{split_on}_test.csv"),
+                     index=False)
         oe_data = oe_data[~oe_data.gameid.isin(drop_games)].copy()
 
     # Sort Values To Ensure Consistent Data

@@ -1,7 +1,9 @@
 
-MyCredentials.py
 *.pyc
-predictorbot.py
 *env
 .idea
-model_validator
+src/model_validator.py
+data/raw/*
+data/interim/*
+data/processed/*
+data/external/*

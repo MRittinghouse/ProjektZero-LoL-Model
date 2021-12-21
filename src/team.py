@@ -1,8 +1,8 @@
 # Housekeeping
-import configurations as conf
 from dataclasses import dataclass
 import numpy as np
 import pandas as pd
+from pathlib import Path
 from typing import Optional
 
 
@@ -46,10 +46,10 @@ class Team:
     def __post_init__(self):
         # Data Import
         self.team_exists = False
-        team_data = pd.read_csv(f"{conf.workingdir}\\ModelData\\flattened_teams.csv")
+        team_data = pd.read_csv(Path.cwd().parent.joinpath('data', 'processed', 'flattened_teams.csv'))
         lower_name = str(self.name).lower()
         team_data = team_data[team_data.teamname.str.lower().isin([lower_name])].reset_index(drop=True)
-        player_data = pd.read_csv(f"{conf.workingdir}\\ModelData\\flattened_players.csv")
+        player_data = pd.read_csv(Path.cwd().parent.joinpath('data', 'processed', 'flattened_players.csv'))
 
         if len(team_data.index) > 0:
             roster = self._get_last_roster(player_data)

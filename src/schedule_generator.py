@@ -1,14 +1,19 @@
 import datetime as dt
+from dotenv import load_dotenv
 import json
-from MyCredentials import key, url
+from os import getenv
 import pandas as pd
 import requests
 from typing import Optional
 
 # Variable Definitions
+load_dotenv()
+key = getenv("OE_SCHEDULE_KEY")
+url = getenv("OE_SCHEDULE_URL")
+
 """
 Misnomers Format: (API Name) : (OE Name)
-# This will need to be regularly monitored and updated.
+This will need to be regularly monitored and updated.
 If you get key errors, update this dictionary.
 """
 misnomers = {
@@ -82,7 +87,7 @@ def upcoming_schedule(leagues: Optional[str], misnomer_lookup: dict,
     if res.status_code == 200:
         schedule = json.loads(res.text)
     else:
-        print(f"Error: {res.status_code}")
+        raise ConnectionError(f"Error: {res.status_code}")
 
     # Filter Schedule of Interest
     if leagues:

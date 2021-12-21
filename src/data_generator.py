@@ -13,20 +13,18 @@ Tim provides an invaluable service to the League community.
 """
 # Housekeeping
 import datetime as dt
-import lolmodeling as lol
-import configurations as conf
-import oracleselixir as oe
+from pathlib import Path
 import pandas as pd
-import sys
+import src.lol_modeling as lol
+import src.oracles_elixir as oe
 from typing import Tuple
 
 
 # Function Definitions
 def enrich_dataset(player_data: pd.DataFrame,
-                   team_data: pd.DataFrame,
-                   directory: str = conf.workingdir) -> Tuple[pd.DataFrame, pd.DataFrame]:
+                   team_data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Compute all enrichments for team and player-based analytics and predictions.
+    Compute all enrichment for team and player-based analytics and predictions.
     This includes DraftKings point totals, Team and Player-based elo, TrueSkill, and EGPM dominance.
 
     Parameters
@@ -35,18 +33,14 @@ def enrich_dataset(player_data: pd.DataFrame,
         DataFrame representing the output of oe.clean_data() split by player.
     team_data : pd.DataFrame
         DataFrame representing the output of oe.clean_data() split by team.
-    directory : str
-        String representing the file path of the working directory.
 
     Returns
     -------
     team_data: pd.DataFrame
-        DataFrame containing team-based metrics and enrichments.
+        DataFrame containing team-based metrics and enrichment.
     player_data: pd.DataFrame
-        DataFrame containing player-based metrics and enrichments.
+        DataFrame containing player-based metrics and enrichment.
     """
-    initial_players = len(player_data)
-    initial_teams = len(team_data)
 
     # Enrich DraftKings Points Data
     team_data = lol.dk_enrich(team_data, entity='team')
@@ -69,18 +63,12 @@ def enrich_dataset(player_data: pd.DataFrame,
     team_data = lol.ewm_model(team_data, "team")
     player_data = lol.ewm_model(player_data, "player")
 
-    # Data Validation
-    final_players = len(player_data)
-    print(f"Player Check: {final_players - initial_players}")
-
-    final_teams = len(team_data)
-    print(f"Team Check: {final_teams - initial_teams}")
-
     # Render CSV Files
+    filepath = Path.cwd().parent
     team_data.drop('index', axis=1, inplace=True)
-    team_data.to_csv(f'{directory}\\ModelData\\team_data.csv', index=False)
+    team_data.to_csv(filepath.joinpath('data', 'interim', 'team_data.csv'), index=False)
     player_data.drop('index', axis=1, inplace=True)
-    player_data.to_csv(f'{directory}\\ModelData\\player_data.csv', index=False)
+    player_data.to_csv(filepath.joinpath('data', 'interim', 'player_data.csv'), index=False)
 
     # Flatten Data Frame / Render
     team_data = team_data.sort_values(['teamid', 'date']).reset_index(drop=True)
@@ -90,7 +78,7 @@ def enrich_dataset(player_data: pd.DataFrame,
                                        "trueskill_sum_sigma", "egpm_dominance_ema",
                                        "blue_side_ema", "red_side_ema"]]
     flattened_teams = flattened_teams.rename(columns={'teamelo_after': 'team_elo'})
-    flattened_teams.to_csv(f'{directory}\\ModelData\\flattened_teams.csv', index=False)
+    flattened_teams.to_csv(filepath.joinpath('data', 'processed', 'flattened_teams.csv'), index=False)
 
     player_data = player_data.sort_values(['playerid', 'date']).reset_index(drop=True)
     flattened_players = player_data.groupby('playerid').nth(-1).reset_index(drop=True)
@@ -99,7 +87,7 @@ def enrich_dataset(player_data: pd.DataFrame,
                                            "trueskill_sigma", "egpm_dominance_ema",
                                            "blue_side_ema", "red_side_ema"]]
     flattened_players = flattened_players.rename(columns={'player_elo_after': 'player_elo'})
-    flattened_players.to_csv(f'{directory}\\ModelData\\flattened_players.csv', index=False)
+    flattened_players.to_csv(filepath.joinpath('data', 'processed', 'flattened_players.csv'), index=False)
 
     return team_data, player_data
 
@@ -110,7 +98,7 @@ def main():
     years = [str(current_year), str(current_year - 1)]
 
     # Download Data
-    data = oe.download_data(directory=conf.workingdir, years=years)
+    data = oe.download_data(years=years)
 
     # Remove Buggy Matches (both red/blue team listed as same team, invalid for elo/TrueSkill)
     invalid_games = ['NA1/3754345055', 'NA1/3754344502',
@@ -119,13 +107,9 @@ def main():
     data = data[~data.gameid.isin(invalid_games)].copy()
 
     # Clean/Format Data
-    teams = oe.clean_data(data, split_on='team',
-                          team_replacements=conf.team_replacements,
-                          player_replacements=conf.player_replacements)
+    teams = oe.clean_data(data, split_on='team')
 
-    players = oe.clean_data(data, split_on='player',
-                            team_replacements=conf.team_replacements,
-                            player_replacements=conf.player_replacements)
+    players = oe.clean_data(data, split_on='player')
 
     # Enrich Data
     teams, players = enrich_dataset(player_data=players, team_data=teams)

@@ -20,8 +20,8 @@ This code is intended to be imported into your analytics projects.
 Example
 -------
     # Housekeeping
-    import oracleselixir as oe
-    import lolmodeling
+    import oracles_elixir as oe
+    import lol_modeling
     import pandas as pd
 
     # Data Import
@@ -35,11 +35,11 @@ Example
 import itertools
 import math
 import numpy as np
-import oracleselixir as oe
+import src.oracles_elixir as oe
 import pandas as pd
 from scipy.stats import norm
-import sys
 import trueskill
+
 
 # Function Library
 def std(x: int) -> int:

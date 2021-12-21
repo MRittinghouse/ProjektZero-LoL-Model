@@ -12,7 +12,7 @@ import datetime
 import math
 import pandas as pd
 from scipy.stats import norm
-from team import Team
+from src.team import Team
 
 pd.options.display.float_format = '{:,.3f}'.format
 
