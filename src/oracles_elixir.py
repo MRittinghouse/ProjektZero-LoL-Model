@@ -16,7 +16,6 @@ import os
 import pandas as pd
 from pathlib import Path
 import requests
-import sys
 from typing import Optional, Union
 
 
@@ -216,6 +215,11 @@ def clean_data(oe_data: pd.DataFrame,
     oe_data = oe_data[oe_data.gameid.notna()]
     oe_data = oe_data[oe_data.position.notna()]
 
+    # Drop Games With "Unknown Player/Team" Lookup Failures
+    drop_games = oe_data[(oe_data["playername"] == "unknown player") | (oe_data["teamname"] == "unknown team")].copy()
+    drop_games = drop_games["gameid"].unique()
+    oe_data = (oe_data[~oe_data.gameid.isin(drop_games)].copy().reset_index(drop=True))
+
     # Normalize Player/Team Names
     if team_replacements:
         oe_data['teamname'] = oe_data['teamname'].replace(team_replacements)
@@ -226,7 +230,6 @@ def clean_data(oe_data: pd.DataFrame,
     if split_on == "team":
         oe_data = oe_data[oe_data["position"] == "team"]
         cap = 2
-        drop_val = "unknown team"
         oe_data = oe_data[["date", "gameid", "side", "league", "teamname", "teamid",
                            "result", "kills", "deaths", "assists",
                            "earned gpm", "gamelength", "ckpm", "team kpm",
@@ -236,7 +239,6 @@ def clean_data(oe_data: pd.DataFrame,
     elif split_on == "player":
         oe_data = oe_data[oe_data["position"] != "team"].copy()
         cap = 10
-        drop_val = "unknown player"
         oe_data = oe_data[["date", "gameid", "side", "position", "league",
                            "playername", "playerid", "teamname", "teamid", "result", "kills",
                            "deaths", "assists", "total cs", "earned gpm", "earnedgoldshare",
@@ -253,10 +255,7 @@ def clean_data(oe_data: pd.DataFrame,
     counts = counts[(counts["gameid"] < cap) | (counts["gameid"] > cap)]
     if len(counts) > 0:
         drop_games = counts.index.to_list()
-        drops = oe_data[oe_data.gameid.isin(drop_games)].copy()
-        drops.to_csv(filepath.joinpath(f"dropped_{split_on}.csv"),
-                     index=False)
-        oe_data = oe_data[~oe_data.gameid.isin(drop_games)].copy()
+        oe_data = oe_data[~oe_data.gameid.isin(drop_games)].copy().reset_index(drop=True)
 
     # Sort Values To Ensure Consistent Data
     if split_on == "player":
@@ -268,14 +267,9 @@ def clean_data(oe_data: pd.DataFrame,
         split_name = "teamname"
         split_id = "teamid"
         oe_data = oe_data.sort_values(["league", "date", "gameid", "side"])
+
     else:
         raise ValueError("Must split on either player or team.")
-
-    # Drop Games With "Unknown Player/Team" Lookup Failures
-    drop_games = oe_data[oe_data[split_name] == drop_val].copy()
-    drop_games = drop_games["gameid"].unique()
-    oe_data = (oe_data[~oe_data.gameid.isin(drop_games)].copy()
-               .reset_index(drop=True))
 
     # SAFETY - Fill Null Values For Player/Team ID With Player Name:
     # The invocation of this at the player level is in the if split_on == "player" section below.

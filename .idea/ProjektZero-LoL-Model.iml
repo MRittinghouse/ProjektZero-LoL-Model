@@ -12,4 +12,11 @@
     <option name="format" value="NUMPY" />
     <option name="myDocStringFormat" value="NumPy" />
   </component>
+  <component name="PyNamespacePackagesService">
+    <option name="namespacePackageFolders">
+      <list>
+        <option value="$MODULE_DIR$/src" />
+      </list>
+    </option>
+  </component>
 </module>

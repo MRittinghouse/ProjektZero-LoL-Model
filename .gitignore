@@ -2,7 +2,6 @@
 *.pyc
 *env
 .idea
-src/model_validator.py
 data/raw/*
 !data/raw/README.md
 data/interim/*

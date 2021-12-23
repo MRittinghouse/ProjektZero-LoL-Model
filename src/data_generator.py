@@ -15,9 +15,9 @@ Tim provides an invaluable service to the League community.
 import datetime as dt
 from pathlib import Path
 import pandas as pd
+from typing import Tuple
 import src.lol_modeling as lol
 import src.oracles_elixir as oe
-from typing import Tuple
 
 
 # Function Definitions
@@ -46,7 +46,7 @@ def enrich_dataset(player_data: pd.DataFrame,
     team_data = lol.dk_enrich(team_data, entity='team')
     player_data = lol.dk_enrich(player_data, entity='player')
 
-    # EnrichElo Statistics
+    # Enrich Elo Statistics
     player_data = lol.player_elo(player_data)
 
     team_data = lol.team_elo(team_data)
@@ -74,10 +74,10 @@ def enrich_dataset(player_data: pd.DataFrame,
     team_data = team_data.sort_values(['teamid', 'date']).reset_index(drop=True)
     flattened_teams = team_data.groupby('teamid').nth(-1).reset_index(drop=True)
     flattened_teams = flattened_teams[["date", "teamname",
-                                       "teamelo_after", "trueskill_sum_mu",
+                                       "team_elo_after", "trueskill_sum_mu",
                                        "trueskill_sum_sigma", "egpm_dominance_ema",
                                        "blue_side_ema", "red_side_ema"]]
-    flattened_teams = flattened_teams.rename(columns={'teamelo_after': 'team_elo'})
+    flattened_teams = flattened_teams.rename(columns={'team_elo_after': 'team_elo'})
     flattened_teams.to_csv(filepath.joinpath('data', 'processed', 'flattened_teams.csv'), index=False)
 
     player_data = player_data.sort_values(['playerid', 'date']).reset_index(drop=True)

@@ -70,6 +70,10 @@ def elo_calculator(df: pd.DataFrame, entity: str, start_elo: int = 1200, k: int 
     def get_elo(team: str) -> dict:
         return elo_results.get(team, start_elo)
 
+    def expected_result(elo_a: int, elo_b: int) -> int:
+        expect_a = 1.0 / (1 + 10 ** ((elo_b - elo_a) / 400))
+        return expect_a
+
     def update_elo(winner: str, loser: str):
         winner_elo = get_elo(winner)
         elo_winner_before.append(winner_elo)
@@ -77,7 +81,7 @@ def elo_calculator(df: pd.DataFrame, entity: str, start_elo: int = 1200, k: int 
         elo_loser_before.append(loser_elo)
         result_expected.append(1 if winner_elo > loser_elo else 0)
         expected_win = expected_result(winner_elo, loser_elo)
-        change_in_elo = k * (1-expected_win)
+        change_in_elo = k * (1 - expected_win)
         winner_elo += change_in_elo
         loser_elo -= change_in_elo
         elo_results[winner] = winner_elo
@@ -86,23 +90,19 @@ def elo_calculator(df: pd.DataFrame, entity: str, start_elo: int = 1200, k: int 
         elo_loser_after.append(loser_elo)
         elo_expected.append(expected_win)
 
-    def expected_result(elo_a: int, elo_b: int) -> int:
-        expect_a = 1.0/(1+10**((elo_b - elo_a)/400))
-        return expect_a
-
     if entity == 'player':
         df.apply(lambda row: update_elo(row['playerid'], row['opponentid']), axis=1)
         elo_dataframe = pd.DataFrame({'league': df['league'],
                                       'gameid': df['gameid'],
                                       'date': df['date'],
-                                      'win_team_ref': df['teamname'],
+                                      'win_team_ref': df['teamid'],
                                       'position': df['position'],
                                       'winner': df['playerid'],
                                       'winning_elo_before': elo_winner_before,
                                       'winning_elo_after': elo_winner_after,
                                       'win_perc': elo_expected,
                                       'expected_result': result_expected,
-                                      'lose_team_ref': df['opponentteam'],
+                                      'lose_team_ref': df['opponentteamid'],
                                       'loser': df['opponentid'],
                                       'losing_elo_before': elo_loser_before,
                                       'losing_elo_after': elo_loser_after
@@ -159,9 +159,9 @@ def team_elo(df: pd.DataFrame, start: int = 1200, k: int = 28) -> pd.DataFrame:
     winner_data['team_elo_diff'] = elo_data['winning_elo_before'] - elo_data['losing_elo_before']
     winner_data = winner_data.rename(columns={'winner': 'teamid',
                                               'win_team_ref': 'teamname',
-                                              'winning_elo_before': 'teamelo_before',
-                                              'win_perc': 'teamelo_winperc',
-                                              'winning_elo_after': 'teamelo_after'})
+                                              'winning_elo_before': 'team_elo_before',
+                                              'win_perc': 'team_elo_win_perc',
+                                              'winning_elo_after': 'team_elo_after'})
 
     loser_data = elo_data[['loser', 'lose_team_ref', 'league', 'gameid', 'date',
                            'losing_elo_before', 'losing_elo_after']].copy()
@@ -169,13 +169,13 @@ def team_elo(df: pd.DataFrame, start: int = 1200, k: int = 28) -> pd.DataFrame:
     loser_data['team_elo_diff'] = elo_data['losing_elo_before'] - elo_data['winning_elo_before']
     loser_data = loser_data.rename(columns={'loser': 'teamid',
                                             'lose_team_ref': 'teamname',
-                                            'losing_elo_before': 'teamelo_before',
-                                            'win_perc': 'teamelo_winperc',
-                                            'losing_elo_after': 'teamelo_after'})
+                                            'losing_elo_before': 'team_elo_before',
+                                            'win_perc': 'team_elo_win_perc',
+                                            'losing_elo_after': 'team_elo_after'})
 
     # Merge Things Back Together
-    team_elo = pd.concat([winner_data, loser_data], ignore_index=True)
-    df = (team_elo.merge(df, how='left',
+    elo_data = pd.concat([winner_data, loser_data], ignore_index=True)
+    df = (elo_data.merge(df, how='left',
                          left_on=['league', 'gameid', 'date', 'teamname', 'teamid'],
                          right_on=['league', 'gameid', 'date', 'teamname', 'teamid'])
           .reset_index(drop=True))
@@ -212,27 +212,27 @@ def player_elo(df: pd.DataFrame, start: int = 1200, k: int = 28) -> pd.DataFrame
     winner_data = elo_data[['league', 'gameid', 'position', 'date',
                             'win_team_ref', 'winner', 'winning_elo_before', 'win_perc', 'winning_elo_after']].copy()
     winner_data['player_elo_diff'] = elo_data['winning_elo_before'] - elo_data['losing_elo_before']
-    winner_data = winner_data.rename(columns={'win_team_ref': 'teamname',
+    winner_data = winner_data.rename(columns={'win_team_ref': 'teamid',
                                               'winner': 'playerid',
                                               'winning_elo_before': 'player_elo_before',
-                                              'win_perc': 'player_elo_winperc',
+                                              'win_perc': 'player_elo_win_perc',
                                               'winning_elo_after': 'player_elo_after'})
     loser_data = elo_data[['league', 'gameid', 'position', 'date',
                            'lose_team_ref', 'loser', 'losing_elo_before', 'losing_elo_after']].copy()
     loser_data['win_perc'] = 1 - elo_data['win_perc']
     loser_data['player_elo_diff'] = elo_data['losing_elo_before'] - elo_data['winning_elo_before']
-    loser_data = loser_data.rename(columns={'lose_team_ref': 'teamname',
+    loser_data = loser_data.rename(columns={'lose_team_ref': 'teamid',
                                             'loser': 'playerid',
                                             'losing_elo_before': 'player_elo_before',
-                                            'win_perc': 'player_elo_winperc',
+                                            'win_perc': 'player_elo_win_perc',
                                             'losing_elo_after': 'player_elo_after'})
 
     # Merge Things Back Together
-    player_elo = pd.concat([winner_data, loser_data], ignore_index=True)
+    elo_data = pd.concat([winner_data, loser_data], ignore_index=True)
 
-    df = (player_elo.merge(df, how='left',
-                           left_on=['gameid', 'league', 'position', 'date', 'teamname', 'playerid'],
-                           right_on=['gameid', 'league', 'position', 'date', 'teamname', 'playerid'])
+    df = (elo_data.merge(df, how='left',
+                         left_on=['gameid', 'league', 'position', 'date', 'teamid', 'playerid'],
+                         right_on=['gameid', 'league', 'position', 'date', 'teamid', 'playerid'])
           .reset_index(drop=True))
     df.sort_values(by=['date', 'league', 'gameid', 'result', 'position'], ascending=True, inplace=True)
 
@@ -257,17 +257,17 @@ def aggregate_player_elos(player_data: pd.DataFrame, team_data: pd.DataFrame) ->
         DataFrame containing player-based elo for each team for each match.
     """
     # Aggregate Individual Players Into Teams
-    player_data = player_data[['league', 'gameid', 'date', 'teamid', 'teamname',
-                               'player_elo_before', 'player_elo_after', 'player_elo_diff']]
-    team_elo_playerbased = (player_data.groupby(['league', 'gameid', 'teamid', 'teamname', 'date'])
+    player_data = player_data[['league', 'gameid', 'date', 'teamid',
+                               'player_elo_before', 'player_elo_after', 'player_elo_diff', 'player_elo_win_perc']]
+    team_elo_playerbased = (player_data.groupby(['league', 'gameid', 'teamid', 'date'])
                             .agg(['mean'])
                             .reset_index())
     team_elo_playerbased.columns = team_elo_playerbased.columns.droplevel(1)
 
     team_data = (team_data.merge(team_elo_playerbased, how='left',
-                                 on=['gameid', 'league', 'date', 'teamid', 'teamname'])
+                                 on=['gameid', 'league', 'date', 'teamid'])
                  .reset_index(drop=True))
-    team_data.sort_values(by=['date', 'league', 'gameid', 'teamid', 'teamname'], ascending=True, inplace=True)
+    team_data.sort_values(by=['date', 'league', 'gameid', 'teamid'], ascending=True, inplace=True)
 
     return team_data
 
@@ -297,7 +297,9 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
                               'teamname', 'teamid', 'position', 'result', 'earned gpm',
                               'ckpm', 'team kpm']].copy()
 
-    earned_gold = input_data.groupby(['league', 'gameid', 'date', 'teamname', 'teamid'])['earned gpm'].sum().reset_index()
+    earned_gold = (input_data.groupby(['league', 'gameid', 'date', 'teamname', 'teamid'])
+                   ['earned gpm'].sum()
+                   .reset_index())
     earned_gold = earned_gold.rename(columns={'earned gpm': 'team_egpm'})
 
     input_data = pd.merge(input_data, earned_gold, how='left', on=['league', 'gameid', 'date', 'teamname', 'teamid'])
@@ -337,7 +339,7 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
                            df[ind, 8],  # blue earned gpm
                            df[ind, 9],  # blue kpm
                            df[ind, 4],  # blue team name
-                           df[ind, 10], # blue team id
+                           df[ind, 10],  # blue team id
                            df[ind + 4, 0],  # blue top
                            df[ind + 1, 0],  # blue jng
                            df[ind + 2, 0],  # blue mid
@@ -345,7 +347,7 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
                            df[ind + 3, 0],  # blue sup
                            df[ind, 3],  # blue result
                            df[ind + 5, 4],  # red team name
-                           df[ind + 5, 10], # red team id
+                           df[ind + 5, 10],  # red team id
                            df[ind + 5, 8],  # red earned gpm
                            df[ind + 5, 9],  # red kpm
                            df[ind + 9, 0],  # red top
@@ -497,24 +499,26 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
     blue['blue_sum_mu'] = lcs_rating[blue_mu].sum(axis=1)
     blue['blue_sum_sigma'] = lcs_rating[blue_sigma].sum(axis=1)
     blue['opponent_sum_mu'] = lcs_rating[red_mu].sum(axis=1)
+    blue['opponent_sum_sigma'] = lcs_rating[red_sigma].sum(axis=1)
     blue['trueskill_diff'] = blue['blue_team_win_prob'] - 0.50
     blue = blue.rename(columns={'blue_team': 'teamname',
                                 'blue_team_id': 'teamid',
                                 'blue_sum_mu': 'trueskill_sum_mu',
                                 'blue_sum_sigma': 'trueskill_sum_sigma',
-                                'blue_team_win_prob': 'trueskill_winperc'})
+                                'blue_team_win_prob': 'trueskill_win_perc'})
 
     red = lcs_rating[['gameid', 'date', 'red_team', 'red_team_id']].copy()
     red['red_team_win_prob'] = 1 - lcs_rating['blue_team_win_prob']
     red['red_sum_mu'] = lcs_rating[red_mu].sum(axis=1)
     red['red_sum_sigma'] = lcs_rating[red_sigma].sum(axis=1)
     red['opponent_sum_mu'] = lcs_rating[blue_mu].sum(axis=1)
+    red['opponent_sum_sigma'] = lcs_rating[blue_sigma].sum(axis=1)
     red['trueskill_diff'] = red['red_team_win_prob'] - 0.50
     red = red.rename(columns={'red_team': 'teamname',
                               'red_team_id': 'teamid',
                               'red_sum_mu': 'trueskill_sum_mu',
                               'red_sum_sigma': 'trueskill_sum_sigma',
-                              'red_team_win_prob': 'trueskill_winperc'})
+                              'red_team_win_prob': 'trueskill_win_perc'})
 
     # Merge Things Back Together
     team_trueskill = pd.concat([blue, red], ignore_index=True)
@@ -670,9 +674,9 @@ def egpm_model(data: pd.DataFrame, entity: str) -> pd.DataFrame:
 
     data['egpm_dominance_expected_result'] = np.where(data['egpm_dominance_ema'] >=
                                                       data['opp_egpm_dominance_ema'], 1, 0)
-    data['egpm_dominance_winperc'] = (data['egpm_dominance_ema'] /
-                                      (data['egpm_dominance_ema'] +
-                                       data['opp_egpm_dominance_ema']))
+    data['egpm_dominance_win_perc'] = (data['egpm_dominance_ema'] /
+                                       (data['egpm_dominance_ema'] +
+                                        data['opp_egpm_dominance_ema']))
     data['egpm_dominance_diff'] = data['egpm_dominance_ema'] - data['opp_egpm_dominance_ema']
 
     return data
@@ -696,17 +700,17 @@ def dk_enrich(oe_data, entity):
     """
     if entity == 'team':
         oe_data['dkpoints'] = (oe_data['towers'] +
-                               (2*oe_data['dragons']) +
-                               (3*oe_data['barons']) +
-                               (2*oe_data['firstblood']) +
+                               (2 * oe_data['dragons']) +
+                               (3 * oe_data['barons']) +
+                               (2 * oe_data['firstblood']) +
                                (np.where(oe_data['result'] > 0, 2, 0)) +
-                               (np.where((oe_data['gamelength']/60) < 30,
+                               (np.where((oe_data['gamelength'] / 60) < 30,
                                          2, 0)))
     elif entity == 'player':
-        oe_data['dkpoints'] = ((3*oe_data['kills']) +
-                               (2*oe_data['assists']) +
-                               (-1*oe_data['deaths']) +
-                               (0.02*oe_data['total cs']) +
+        oe_data['dkpoints'] = ((3 * oe_data['kills']) +
+                               (2 * oe_data['assists']) +
+                               (-1 * oe_data['deaths']) +
+                               (0.02 * oe_data['total cs']) +
                                (np.where((oe_data['kills'] > 10)
                                          | (oe_data['assists'] > 10), 2, 0)))
     else:
