@@ -63,25 +63,25 @@ Thus, the current model is comprised of four major models:
 
 This model looks at a shorter period of data. The K value was set by a lot of iterative trial and error, testing until I found the best fit. 
 
-**Current Tested Accuracy: 60.25%, Log Loss: 65.15%**
+**Current Tested Accuracy: 61.72%, Log Loss: 64.85% - on Dec 23, 2021**
 
 ### Player Based Elo
 
 This model looks at the performance of each individual player. This model is more resistant to players changing teams, or moving back and forth between academy and main leagues. However, this model also has the issue of incorporating the effects of the other 4 players on the team into the player's elo. 
 
-**Current Tested Accuracy: 61.32%, Log Loss: 65.45%**
+**Most Recent Tested Accuracy: 62.73%, Log Loss: 64.38% - on Dec 23, 2021**
 
 ### TrueSkill
 
 TrueSkill is calculated on a player-basis for the past two years. TrueSkill is much better oriented to monitor player-level effects and skill, and also uses mu and sigma values to capture a player's mean and variance in their performance. 
 
-**Current Tested Accuracy: 63.03%, Log Loss: 68.24%**
+**Most Recent Tested Accuracy: 61.95%, Log Loss: 68.54% - on Dec 23, 2021**
 
 ### TrueSkill-Normalized EGPM Dominance
 
 This model is one that I developed myself, and is slightly more difficult to explain. But the general idea is that gold is the most individually significant stat to monitor in League of Legends as an esport. This model looks at a team's gold lead over their opponent, and uses that as a proxy to measure the "strength of the win". EGPM stands for "Earned Gold Per Minute" and is a stat measured in the Oracle's Elixir data. The intent is to monitor a team's Earned Gold Per Minute over their opponent, relative to each team's average EGPM value. The way this is set up is that if the 1st place team in the league loses to the 10th place team in the league, where the 10th place team has a much higher EGPM statistic, the 1st place team is penalized significantly more than if they lost in a close game to the 2nd place team in the league. This is similar to elo, but the EGPM statistic is used to quantify the "strength of the win". This has been the best performing model, but again may struggle with player substitutions. 
 
-**Current Tested Accuracy: 70.22%, Log Loss: 64.74%**
+**Most Recent Tested Accuracy: 64.24%, Log Loss: 65.28% - on Dec 23, 2021**
 
 ### How It Gets Ensembled
 
