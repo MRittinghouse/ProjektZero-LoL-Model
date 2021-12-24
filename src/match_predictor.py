@@ -13,6 +13,7 @@ import math
 import pandas as pd
 from scipy.stats import norm
 from src.team import Team
+from src.model_validator import generate_validation_metrics
 
 pd.options.display.float_format = '{:,.3f}'.format
 
@@ -25,7 +26,7 @@ def predict_match(blue: Team, red: Team) -> pd.DataFrame:
     def trueskill_prediction(blue_team_mu: float, blue_team_sigma: float,
                              red_team_mu: float, red_team_sigma: float) -> float:
         delta_mu = (blue_team_mu - red_team_mu)
-        sum_sig = ((blue_team_sigma ** 2) + (red_team_sigma))
+        sum_sig = ((blue_team_sigma ** 2) + red_team_sigma)
         denominator = math.sqrt(10 * (4.1666666667 ** 2) + sum_sig)
         blue_win_perc = norm.cdf(delta_mu / denominator)
         return blue_win_perc
@@ -33,6 +34,8 @@ def predict_match(blue: Team, red: Team) -> pd.DataFrame:
     def standard_prediction(blue_stat: float, red_stat: float) -> float:
         blue_win_perc = (blue_stat / (blue_stat + red_stat))
         return blue_win_perc
+
+    weights = generate_validation_metrics(graph=False)
 
     match = pd.DataFrame({"blue": [blue.name],
                           "red": [red.name],
@@ -43,20 +46,30 @@ def predict_match(blue: Team, red: Team) -> pd.DataFrame:
                                                                     red.player_trueskill_sigma)],
                           "egpm_dom": [standard_prediction(blue.egpm_dominance, red.egpm_dominance)],
                           "side_win": [standard_prediction(blue.side_win_rate, red.side_win_rate)]})
+
     if blue.team_exists and red.team_exists:
         match["team_elo"] = elo_prediction(blue.team_elo, red.team_elo)
         match["team_trueskill"] = trueskill_prediction(blue.team_trueskill_mu, blue.team_trueskill_sigma,
                                                        red.team_trueskill_mu, red.team_trueskill_sigma)
-        match["blue_win_chance"] = ((match["team_elo"] * 0.11) + (match["player_elo"] * 0.11) +
-                                    (match["team_trueskill"] * 0.125) + (match["player_trueskill"] * 0.125) +
-                                    (match["egpm_dom"] * 0.280) + (match["side_win"] * 0.250))
+        sum_accuracy = (weights["team_accuracy"] + weights["player_accuracy"] +
+                        weights["trueskill_accuracy"] + weights["trueskill_accuracy"] +
+                        weights["egpm_dom_accuracy"] + 0.15)
+        match["blue_win_chance"] = ((match["team_elo"] * (weights["team_accuracy"]/sum_accuracy)) +
+                                    (match["player_elo"] * (weights["player_accuracy"]/sum_accuracy)) +
+                                    (match["team_trueskill"] * (weights["trueskill_accuracy"]/sum_accuracy)) +
+                                    (match["player_trueskill"] * (weights["trueskill_accuracy"]/sum_accuracy)) +
+                                    (match["egpm_dom"] * (weights["egpm_dom_accuracy"]/sum_accuracy)) +
+                                    (match["side_win"] * (0.065/sum_accuracy)))
         match["deviation"] = match[["team_elo", "player_elo", "team_trueskill",
                                     "player_trueskill", "egpm_dom", "side_win"]].std(axis=1)
     else:
-        match["blue_win_chance"] = ((match["player_elo"] * 0.325) +
-                                    (match["player_trueskill"] * 0.325) +
-                                    (match["egpm_dom"] * 0.30) +
-                                    (match["side_win"] * 0.05))
+        sum_accuracy = (weights["player_accuracy"] +
+                        weights["trueskill_accuracy"] +
+                        weights["egpm_dom_accuracy"] + 0.1)
+        match["blue_win_chance"] = ((match["player_elo"] * (weights["player_accuracy"]/sum_accuracy)) +
+                                    (match["player_trueskill"] * (weights["trueskill_accuracy"]/sum_accuracy)) +
+                                    (match["egpm_dom"] * (weights["egpm_dom_accuracy"]/sum_accuracy)) +
+                                    (match["side_win"] * (0.045/sum_accuracy)))
         match["deviation"] = match[["player_elo", "player_trueskill", "egpm_dom", "side_win"]].std(axis=1)
 
     return match
