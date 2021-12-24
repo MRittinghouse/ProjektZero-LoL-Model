@@ -75,7 +75,7 @@ def predict_match(blue: Team, red: Team) -> pd.DataFrame:
     return match
 
 
-def Bo3(t1name, t1odds, t2name, t2odds):
+def best_of_three(t1name, t1odds, t2name, t2odds):
     """
     Predict the outcome of a Best of 3 series with game odds.
 
@@ -124,7 +124,7 @@ Overall Likelihood Of {t2name} To Win Series: {((t2_20 + t2_21) * 100):.2f}%
     return output
 
 
-def Bo5(t1name, t1odds, t2name, t2odds):
+def best_of_five(t1name, t1odds, t2name, t2odds):
     """
     Predict the results of a Best of 5 series using single game probability.
 
@@ -220,7 +220,8 @@ def main(blue1: str, blue2: str, blue3: str, blue4: str, blue5: str,
     if red.warning:
         output += f"\n{red.warning}"
 
-    output += """\n \nPlease consider supporting my obsessive coding habit at: https://www.buymeacoffee.com/projektzero```"""
+    output += """\n \nPlease consider supporting my obsessive coding habit at: 
+    https://www.buymeacoffee.com/projektzero``` """
 
     # Optional Print Statements for troubleshooting
     #with pd.option_context('display.max_rows', None, 'display.max_columns', None):
@@ -228,6 +229,7 @@ def main(blue1: str, blue2: str, blue3: str, blue4: str, blue5: str,
     #    print(end-start)
 
     return output
+
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):
     print(main("Ssumday", "Josedeodo", "Abbedagge", "Totally Broken Name", "huhi",

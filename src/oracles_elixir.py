@@ -188,8 +188,6 @@ def clean_data(oe_data: pd.DataFrame,
     A Pandas dataframe of formatted, subset Oracle's Elixir data matching
     the parameters provided above.
     """
-    filepath = Path.cwd().parent.joinpath('data', 'interim')
-
     # Preliminary Data Type Formatting
     oe_data = oe_data.astype({"date": "datetime64",
                               "gameid": "str",
