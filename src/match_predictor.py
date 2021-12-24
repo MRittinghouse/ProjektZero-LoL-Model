@@ -211,7 +211,7 @@ def main(blue1: str, blue2: str, blue3: str, blue4: str, blue5: str,
 
     end = datetime.datetime.now()
 
-    output = output[["blue", "red", "blue_win_chance"]]
+    output = output[["blue", "red", "blue_win_chance", "deviation"]]
     output = f"""```ProjektZero Model Predictions:
 {output.copy()}"""
 
