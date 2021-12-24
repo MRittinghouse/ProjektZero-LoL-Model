@@ -98,19 +98,21 @@ def validate_trueskill(teams: pd.DataFrame, directory: Path):
 
 def validate_egpm_dominance(teams: pd.DataFrame, directory: Path):
     # Data Preparation
+    teams['egpm_dominance_win_perc'] = teams['egpm_dominance_win_perc'].fillna(0.5)
+    teams['egpm_dominance_expected_result'] = np.where(teams['egpm_dominance_win_perc'] >= 0.5, 1, 0)
     teams['result'] = teams.result.astype('int32')
 
     # Generate Graph
     grf = sns.jointplot(data=teams,
-                        x='egpm_dominance_ema',
-                        y='opp_egpm_dominance_ema',
+                        x='egpm_dominance_ema_before',
+                        y='opp_egpm_dominance_ema_before',
                         hue='result')
 
     # Label Accuracy and Log Loss
     correct = len(teams[teams['egpm_dominance_expected_result'] == teams['result']]) / len(teams)
     logloss = log_loss(teams['result'], teams['egpm_dominance_win_perc'], labels=[0, 1])
-    grf.ax_joint.text(teams['egpm_dominance_ema'].mean() - (teams['egpm_dominance_ema'].mean() * 0.40),
-                      teams['opp_egpm_dominance_ema'].max(),
+    grf.ax_joint.text(teams['egpm_dominance_ema_before'].mean() - (teams['egpm_dominance_ema_before'].mean() * 0.40),
+                      teams['opp_egpm_dominance_ema_before'].max(),
                       f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}')
 
     # Format and Export

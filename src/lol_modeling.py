@@ -609,16 +609,17 @@ def ewm_model(df: pd.DataFrame, entity: str) -> pd.DataFrame:
     df['result'] = df['result'].astype(float)
 
     red_side = df[df['side'] == 'Red'].copy()
-    red_side['red_side_ema'] = (red_side
-                                .groupby(identity)['result']
-                                .transform(lambda x: x.ewm(halflife=5)
-                                           .mean()))
+    red_side['red_side_ema_before'] = (red_side.groupby(identity)['result']
+                                       .transform(lambda x: x.ewm(halflife=5).mean().shift().bfill()))
+    red_side['red_side_ema_after'] = (red_side.groupby(identity)['result']
+                                      .transform(lambda x: x.ewm(halflife=5).mean()))
 
     blue_side = df[df['side'] == 'Blue'].copy()
-    blue_side['blue_side_ema'] = (blue_side
-                                  .groupby(identity)['result']
-                                  .transform(lambda x: x.ewm(halflife=5)
-                                             .mean()))
+    blue_side['blue_side_ema_before'] = (blue_side.groupby(identity)['result']
+                                         .transform(lambda x: x.ewm(halflife=5).mean().shift().bfill()))
+    blue_side['blue_side_ema_after'] = (blue_side.groupby(identity)['result']
+                                        .transform(lambda x: x.ewm(halflife=5)
+                                                   .mean()))
 
     merged = pd.concat([blue_side, red_side], ignore_index=True)
     merged = merged.sort_values([identity, 'date']).reset_index(drop=True)
@@ -626,7 +627,8 @@ def ewm_model(df: pd.DataFrame, entity: str) -> pd.DataFrame:
     win_rates = (merged.groupby([identity], as_index=False)
                  .apply(lambda group: group.ffill())
                  .reset_index(drop=True))
-    win_rates[['blue_side_ema', 'red_side_ema']] = win_rates[['blue_side_ema', 'red_side_ema']].fillna(1)
+    columns = ['blue_side_ema_before', 'blue_side_ema_after', 'red_side_ema_before', 'red_side_ema_after']
+    win_rates[columns] = win_rates[columns].fillna(1)
     win_rates.sort_values(by=['date', 'league', 'gameid', 'result'], ascending=True, inplace=True)
 
     return win_rates
@@ -665,19 +667,23 @@ def egpm_model(data: pd.DataFrame, entity: str) -> pd.DataFrame:
     data['opp_egpm_dominance_ratio'] = (data['opponent_egpm'] /
                                         (data[mu] /
                                          data[opp_mu]))
-    data['egpm_dominance_ema'] = (data.groupby([identity])
-                                  ['egpm_dominance_ratio']
-                                  .transform(lambda x: x.ewm(halflife=9).mean()))
-    data['opp_egpm_dominance_ema'] = (data.groupby([identity])
-                                      ['opp_egpm_dominance_ratio']
-                                      .transform(lambda x: x.ewm(halflife=9).mean()))
+    data['egpm_dominance_ema_before'] = (data.groupby([identity])
+                                         ['egpm_dominance_ratio']
+                                         .transform(lambda x: x.ewm(halflife=9).mean().shift().bfill()))
+    data['egpm_dominance_ema_after'] = (data.groupby([identity])
+                                        ['egpm_dominance_ratio']
+                                        .transform(lambda x: x.ewm(halflife=9).mean()))
+    data['opp_egpm_dominance_ema_before'] = (data.groupby([identity])
+                                             ['opp_egpm_dominance_ratio']
+                                             .transform(lambda x: x.ewm(halflife=9).mean().shift().bfill()))
+    data['opp_egpm_dominance_ema_after'] = (data.groupby([identity])
+                                            ['opp_egpm_dominance_ratio']
+                                            .transform(lambda x: x.ewm(halflife=9).mean()))
 
-    data['egpm_dominance_expected_result'] = np.where(data['egpm_dominance_ema'] >=
-                                                      data['opp_egpm_dominance_ema'], 1, 0)
-    data['egpm_dominance_win_perc'] = (data['egpm_dominance_ema'] /
-                                       (data['egpm_dominance_ema'] +
-                                        data['opp_egpm_dominance_ema']))
-    data['egpm_dominance_diff'] = data['egpm_dominance_ema'] - data['opp_egpm_dominance_ema']
+    data['egpm_dominance_win_perc'] = (data['egpm_dominance_ema_before'] /
+                                       (data['egpm_dominance_ema_before'] +
+                                        data['opp_egpm_dominance_ema_before']))
+    data['egpm_dominance_diff'] = data['egpm_dominance_ema_before'] - data['opp_egpm_dominance_ema_before']
 
     return data
 

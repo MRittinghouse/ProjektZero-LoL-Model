@@ -75,8 +75,8 @@ def enrich_dataset(player_data: pd.DataFrame,
     flattened_teams = team_data.groupby('teamid').nth(-1).reset_index(drop=True)
     flattened_teams = flattened_teams[["date", "teamname",
                                        "team_elo_after", "trueskill_sum_mu",
-                                       "trueskill_sum_sigma", "egpm_dominance_ema",
-                                       "blue_side_ema", "red_side_ema"]]
+                                       "trueskill_sum_sigma", "egpm_dominance_ema_after",
+                                       "blue_side_ema_after", "red_side_ema_after"]]
     flattened_teams = flattened_teams.rename(columns={'team_elo_after': 'team_elo'})
     flattened_teams.to_csv(filepath.joinpath('data', 'processed', 'flattened_teams.csv'), index=False)
 
@@ -84,8 +84,8 @@ def enrich_dataset(player_data: pd.DataFrame,
     flattened_players = player_data.groupby('playerid').nth(-1).reset_index(drop=True)
     flattened_players = flattened_players[["date", "teamname", "position",
                                            "playername", "player_elo_after", "trueskill_mu",
-                                           "trueskill_sigma", "egpm_dominance_ema",
-                                           "blue_side_ema", "red_side_ema"]]
+                                           "trueskill_sigma", "egpm_dominance_ema_after",
+                                           "blue_side_ema_after", "red_side_ema_after"]]
     flattened_players = flattened_players.rename(columns={'player_elo_after': 'player_elo'})
     flattened_players.to_csv(filepath.joinpath('data', 'processed', 'flattened_players.csv'), index=False)
 

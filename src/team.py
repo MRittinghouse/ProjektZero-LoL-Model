@@ -81,12 +81,13 @@ class Team:
             for d in diff:
                 substitute = {'date': '1/1/2022 23:59', 'teamname': 'Null', 'position': 'Null',
                               'playername': d, 'player_elo': 1100, 'trueskill_mu': 21, 'trueskill_sigma': 8,
-                              'egpm_dominance_ema': 198, 'blue_side_ema': 0.4, 'red_side_ema': 0.4}
+                              'egpm_dominance_ema_after': 198, 'blue_side_ema_after': 0.4, 'red_side_ema_after': 0.4}
                 data = data.append(substitute, ignore_index=True)
             self.warning += f"\n WARNING: {str(diff)} not found in database. Substitute values were used."
 
         self.player_elo = data.player_elo.mean()
         self.player_trueskill_mu = data.trueskill_mu.sum()
         self.player_trueskill_sigma = data.trueskill_sigma.sum()
-        self.egpm_dominance = data.egpm_dominance_ema.sum()
-        self.side_win_rate = data.blue_side_ema.mean() if self.side.lower() == "blue" else data.red_side_ema.mean()
+        self.egpm_dominance = data.egpm_dominance_ema_after.sum()
+        self.side_win_rate = data.blue_side_ema_after.mean() if self.side.lower() == "blue" \
+            else data.red_side_ema_after.mean()

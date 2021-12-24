@@ -81,9 +81,11 @@ TrueSkill is calculated on a player-basis for the past two years. TrueSkill is m
 
 This model is one that I developed myself, and is slightly more difficult to explain. But the general idea is that gold is the most individually significant stat to monitor in League of Legends as an esport. This model looks at a team's gold lead over their opponent, and uses that as a proxy to measure the "strength of the win". EGPM stands for "Earned Gold Per Minute" and is a stat measured in the Oracle's Elixir data. The intent is to monitor a team's Earned Gold Per Minute over their opponent, relative to each team's average EGPM value. The way this is set up is that if the 1st place team in the league loses to the 10th place team in the league, where the 10th place team has a much higher EGPM statistic, the 1st place team is penalized significantly more than if they lost in a close game to the 2nd place team in the league. This is similar to elo, but the EGPM statistic is used to quantify the "strength of the win". This has been the best performing model, but again may struggle with player substitutions. 
 
-**Most Recent Tested Accuracy: 64.24%, Log Loss: 65.28% - on Dec 23, 2021**
+**Most Recent Tested Accuracy: 59.13%, Log Loss: 66.99% - on Dec 23, 2021**
 
 ### How It Gets Ensembled
 
 Each of the four models' predictions is output in the document, so you can see the individual performance. This output also comes with an average that's calculated by weighting each model's accuracy into an average of all four model probability scores. A standard deviation value is also computed, so you get the ensemble model's weighted average, and standard deviation, alongside each of the four individual model probability scores as well. 
+
+**Ensemble Tested Accuracy: 63.40, Log Loss: 63.83% - on Dec 23, 2021**
  
