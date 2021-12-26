@@ -63,6 +63,10 @@ def enrich_dataset(player_data: pd.DataFrame,
     team_data = lol.ewm_model(team_data, "team")
     player_data = lol.ewm_model(player_data, "player")
 
+    # Enrich Game Statistics
+    team_data = lol.enrich_ema_statistics(team_data, "team")
+    player_data = lol.enrich_ema_statistics(player_data, "player")
+
     # Render CSV Files
     filepath = Path.cwd().parent
     team_data.drop('index', axis=1, inplace=True)

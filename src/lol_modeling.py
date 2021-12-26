@@ -688,16 +688,16 @@ def egpm_model(data: pd.DataFrame, entity: str) -> pd.DataFrame:
     return data
 
 
-def dk_enrich(oe_data, entity):
+def dk_enrich(oe_data: pd.DataFrame, entity: str):
     """
     Calculate DraftKings point values for a player or team.
 
     Parameters
     ----------
-    oe_data : DataFrame
+    oe_data : pd.DataFrame
         A Pandas data frame containing cleaned Oracle's Elixir data.
-    entity : 'team' or 'player'
-        Calculate DK points using Team scoring or Player scoring.
+    entity : str
+        Calculate DK points using Team scoring or Player scoring. Value must be 'team' or 'player'.
 
     Returns
     -------
@@ -721,4 +721,27 @@ def dk_enrich(oe_data, entity):
                                          | (oe_data['assists'] > 10), 2, 0)))
     else:
         raise ValueError("Must define either player or team scoring.")
+    return oe_data
+
+
+def enrich_ema_statistics(oe_data: pd.DataFrame, entity: str,):
+    if entity == 'team':
+        identity = 'teamid'
+        columns = ['kills', 'deaths', 'assists', 'earned gpm', 'gamelength',
+                   'firstblood', 'dragons', 'barons', 'towers',
+                   'goldat15', 'xpat15', 'csat15', 'golddiffat15', 'xpdiffat15', 'csdiffat15', 'dkpoints']
+    elif entity == 'player':
+        identity = 'playerid'
+        columns = ['kills', 'deaths', 'assists', 'total cs', 'earned gpm', 'earnedgoldshare', 'gamelength',
+                   'goldat15', 'xpat15', 'csat15', 'assistsat15', 'deathsat15',
+                   'golddiffat15', 'xpdiffat15', 'csdiffat15', 'dkpoints']
+    else:
+        raise ValueError("Entity must be either team or player.")
+
+    for col in columns:
+        oe_data[f'{col}_ema_after'] = (oe_data.groupby([identity])[col]
+                                       .transform(lambda x: x.ewm(halflife=5).mean()))
+        oe_data[f'{col}_ema_before'] = (oe_data.groupby([identity])[col]
+                                        .transform(lambda x: x.ewm(halflife=9).mean().shift().bfill()))
+
     return oe_data
