@@ -88,4 +88,6 @@ This model is one that I developed myself, and is slightly more difficult to exp
 Each of the four models' predictions is output in the document, so you can see the individual performance. This output also comes with an average that's calculated by weighting each model's accuracy into an average of all four model probability scores. A standard deviation value is also computed, so you get the ensemble model's weighted average, and standard deviation, alongside each of the four individual model probability scores as well. 
 
 **Ensemble Tested Accuracy: 63.40, Log Loss: 63.83% - on Dec 23, 2021**
+
+** Experimental ML Model Accuracy: 65.601% - on Dec 28, 2021** - this is still experimental and under development. 
  
