@@ -1,10 +1,14 @@
 import datetime as dt
 from dotenv import load_dotenv
 import json
+import numpy as np
 from os import getenv
 import pandas as pd
 from pathlib import Path
 import requests
+from src.team import Team
+from src.match_predictor import predict_match
+import sys
 from typing import Optional
 
 # Variable Definitions
@@ -12,24 +16,9 @@ load_dotenv()
 key = getenv("OE_SCHEDULE_KEY")
 url = getenv("OE_SCHEDULE_URL")
 
-"""
-Misnomers Format: (API Name) : (OE Name)
-This will need to be regularly monitored and updated.
-If you get key errors, update this dictionary.
-"""
-misnomers = {
-    "Schalke 04": "FC Schalke 04 Esports",
-    "Edward Gaming": "EDward Gaming",
-    "kt Rolster": "KT Rolster",
-    "TT": "ThunderTalk Gaming",
-    "NONGSHIM REDFORCE": "Nongshim RedForce",
-    "EXCEL": "Excel Esports",
-    "Dignitas": "Dignitas QNTMPAY",
-}
-
 
 # Helper/Utility Functions:
-def __team_namer(team_name: str, misnomer_lookup: dict) -> str:
+def __team_namer(team_name: str) -> str:
     """
     Rename teams to ensure consistency between Oracles Elixir data and the schedule API.
 
@@ -37,21 +26,58 @@ def __team_namer(team_name: str, misnomer_lookup: dict) -> str:
     ----------
     team_name : str
         Name of team from the data set.
-    misnomer_lookup : dict
-        Dictionary object containing misspellings/other names from the data.
     Returns
     -------
     str
         The correct team name.
     """
-    if team_name in misnomer_lookup.keys():
-        return misnomer_lookup[team_name]
+
+    # Misnomers Format: (API Name) : (OE Name)
+    misnomers = {
+        "Schalke 04": "FC Schalke 04 Esports",
+        "Edward Gaming": "EDward Gaming",
+        "kt Rolster": "KT Rolster",
+        "TT": "ThunderTalk Gaming",
+        "Thunder Talk Gaming": "ThunderTalk Gaming",
+        "NONGSHIM REDFORCE": "Nongshim RedForce",
+        "NongShim REDFORCE": "Nongshim RedForce",
+        "EXCEL": "Excel Esports",
+        "Dignitas QNTMPAY": "Dignitas"
+    }
+
+    if team_name in misnomers.keys():
+        return misnomers[team_name]
     else:
         return team_name
 
 
+def schedule_predictor(blue_name: str, red_name: str):
+    """
+    Parameters
+    ----------
+    blue_name: str
+        String containing the name of blue team, matching OE data.
+    red_name: str
+        String containing the name of the red team, matching OE data.
+
+    Returns
+    -------
+    probability: int
+        Likelihood that the blue team will win.
+    """
+    try:
+        blue = Team(name=blue_name, side="Blue")
+        red = Team(name=red_name, side="Red")
+        match = predict_match(blue, red)
+        match = match[["blue_win_chance", "deviation"]]
+        return match["blue_win_chance"].iloc[0], match["deviation"].iloc[0]
+    except Exception as e:
+        #print(f"Error: {blue_name}, {red_name}, {e}")
+        return np.nan, np.nan
+
+
 # Primary Functions
-def upcoming_schedule(leagues: Optional[str], misnomer_lookup: dict,
+def upcoming_schedule(leagues: Optional[str],
                       api_url: str, api_key: str, days: int = 7) -> dict:
     """
     Pings an API endpoint to grab a dictionary of upcoming matches.
@@ -64,8 +90,6 @@ def upcoming_schedule(leagues: Optional[str], misnomer_lookup: dict,
         A string or list of strings containing Leagues of interest
         Valid Leagues are LCS, LEC, LCK, LPL.
         The API does not support all leagues, stick to the big four.
-    misnomer_lookup: dict
-        A dictionary containing lookup values to correct inconsistencies between API and OE.
     api_url : str
         The URL of the API to pull data from.
     api_key : str
@@ -74,8 +98,8 @@ def upcoming_schedule(leagues: Optional[str], misnomer_lookup: dict,
         Number of days forward to search for matches (today + X days).
     Returns
     -------
-    upcoming : dict
-        A dictionary with the format of {ID: [blue, red]} for upcoming matches.
+    upcoming : pd.DataFrame
+        A Pandas DataFrame with the upcoming matches.
     """
     # Get API Response
     headers = {"x-api-key": f"{api_key}"}
@@ -109,6 +133,8 @@ def upcoming_schedule(leagues: Optional[str], misnomer_lookup: dict,
     for i in upcoming:
         if i["team1Code"] == "TBD" or i["team2Code"] == "TBD":
             upcoming.remove(i)
+        i["team1Name"] = __team_namer(i["team1Name"])
+        i["team2Name"] = __team_namer(i["team2Name"])
 
     upcoming = pd.DataFrame(upcoming)
 
@@ -119,7 +145,6 @@ def main():
     filepath = Path.cwd().parent
 
     matches = upcoming_schedule(leagues=None,
-                                misnomer_lookup=misnomers,
                                 api_url=url, api_key=key,
                                 days=6)
 
@@ -129,6 +154,11 @@ def main():
                                           'team2Name': 'Red',
                                           'startTime': 'Start (UTC Time)',
                                           'seriesType': 'Type'})
+        predictions = matches.apply(lambda row: schedule_predictor(row["Blue"], row["Red"]),
+                                    axis=1)
+        matches = pd.concat([matches, predictions], axis=1)
+        matches[["Blue Win%", "Deviation"]] = pd.DataFrame(matches[0].tolist(), index=matches.index).round(4)
+        matches = matches.drop(0, axis=1).reset_index(drop=True)
         matches.to_csv(filepath.joinpath('data', 'processed', 'schedule.csv'), index=False)
         return matches
     else:

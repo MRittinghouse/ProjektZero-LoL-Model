@@ -35,7 +35,7 @@ class Team:
             Order will ALWAYS be bot, jng, mid, sup, top (alphabetical)
         """
         lower_name = str(self.name).lower()
-        player_data = player_data[player_data.playername.str.lower().isin([lower_name])].reset_index(drop=True)
+        player_data = player_data[player_data.teamname.str.lower().isin([lower_name])].reset_index(drop=True)
         last_played = (player_data.sort_values(["date", "teamname", "position"])
                        .drop_duplicates(subset=["teamname", "position"], keep="last", ignore_index=True)
                        .reset_index())
@@ -57,8 +57,11 @@ class Team:
             self.team_elo = team_data.team_elo.mean()
             self.team_trueskill_mu = team_data.trueskill_sum_mu.mean()
             self.team_trueskill_sigma = team_data.trueskill_sum_sigma.mean()
-        #else:
-        #    self.warning += f"""\n WARNING: Team "{str(self.name)}" not found in database. No team data was used."""
+        elif lower_name in ["First 5", "Second 5"]:
+            pass
+        else:
+            self.warning += f"""\n WARNING: Team "{str(self.name)}" not found in database. No team data was used."""
+            print(self.warning)
 
         if not self.bot:
             self.bot = roster[0]
@@ -91,3 +94,7 @@ class Team:
         self.egpm_dominance = data.egpm_dominance_ema_after.sum()
         self.side_win_rate = data.blue_side_ema_after.mean() if self.side.lower() == "blue" \
             else data.red_side_ema_after.mean()
+
+
+if __name__ in ('__main__', '__builtin__', 'builtins'):
+    print(Team(name="Hanwha Life Esports"), side="Red")

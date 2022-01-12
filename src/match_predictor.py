@@ -8,7 +8,6 @@ Please visit and support www.oracleselixir.com
 Tim provides an invaluable service to the League community.
 """
 # Housekeeping
-import datetime
 import math
 import pandas as pd
 from scipy.stats import norm
@@ -197,19 +196,16 @@ Overall Likelihood Of {t2name} To Win Series: {t2likelihood:.2f}%
     return output
 
 
-def main(blue1: str, blue2: str, blue3: str, blue4: str, blue5: str,
-         red1: str, red2: str, red3: str, red4: str, red5: str):
-    # start = datetime.datetime.now()
+def predict_draft(blue_team: str, blue1: str, blue2: str, blue3: str, blue4: str, blue5: str,
+                  red_team: str, red1: str, red2: str, red3: str, red4: str, red5: str):
 
     output = pd.DataFrame()
 
-    blue = Team(name="First 5", side="Blue", top=blue1, jng=blue2, mid=blue3, bot=blue4, sup=blue5)
-    red = Team(name="Second 5", side="Red", top=red1, jng=red2, mid=red3, bot=red4, sup=red5)
+    blue = Team(name=blue_team, side="Blue", top=blue1, jng=blue2, mid=blue3, bot=blue4, sup=blue5)
+    red = Team(name=red_team, side="Red", top=red1, jng=red2, mid=red3, bot=red4, sup=red5)
 
     match = predict_match(blue, red)
     output = pd.concat([output, match], ignore_index=True)
-
-    # end = datetime.datetime.now()
 
     output = output[["blue", "red", "blue_win_chance", "deviation"]]
     output = f"""```ProjektZero Model Predictions:
@@ -224,13 +220,41 @@ def main(blue1: str, blue2: str, blue3: str, blue4: str, blue5: str,
     https://www.buymeacoffee.com/projektzero``` """
 
     # Optional Print Statements for troubleshooting
-    #with pd.option_context('display.max_rows', None, 'display.max_columns', None):
-    #    print(output)
-    #    print(end-start)
+    # with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+    # print(output)
 
     return output
 
 
-if __name__ in ('__main__', '__builtin__', 'builtins'):
-    print(main("Ssumday", "Josedeodo", "Abbedagge", "Totally Broken Name", "huhi",
-               "Impact", "Svenskeren", "Bjergsen", "FBI", "IgNar"))
+def mock_draft(blue1: str, blue2: str, blue3: str, blue4: str, blue5: str,
+               red1: str, red2: str, red3: str, red4: str, red5: str):
+
+    output = pd.DataFrame()
+
+    blue = Team(name="First 5", side="Blue", top=blue1, jng=blue2, mid=blue3, bot=blue4, sup=blue5)
+    red = Team(name="Second 5", side="Red", top=red1, jng=red2, mid=red3, bot=red4, sup=red5)
+
+    match = predict_match(blue, red)
+    output = pd.concat([output, match], ignore_index=True)
+
+    output = output[["blue", "red", "blue_win_chance", "deviation"]]
+    output = f"""```ProjektZero Model Predictions:
+{output.copy()}"""
+
+    if blue.warning:
+        output += f"\n{blue.warning}"
+    if red.warning:
+        output += f"\n{red.warning}"
+
+    output += """\n \nPlease consider supporting my obsessive coding habit at: 
+    https://www.buymeacoffee.com/projektzero``` """
+
+    # Optional Print Statements for troubleshooting
+    # with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+    #    print(output)
+
+    return output
+
+
+# if __name__ in ('__main__', '__builtin__', 'builtins'):
+#     pass

@@ -5,7 +5,6 @@ It is intended to allow users to call down predictions.
 """
 
 # Housekeeping
-import ast
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -33,8 +32,9 @@ async def schedule(ctx, league):
     try:
         output = pd.read_csv(Path.cwd().parent.joinpath('data', 'processed', 'schedule.csv'))
         output = output[output["league"] == league].drop(['league'], axis=1).reset_index(drop=True)
-        output = f"Upcoming {league} Games (Next 6 Days): \n \n" \
-                 f"`{output.to_markdown()}`"
+        output = f"Upcoming {league} Games (Next 10 Games Within One Week): \n \n" \
+                 f"`{output.head(10).to_markdown()}` \n \n" \
+                 "NOTE: Win percentages use the last fielded roster! Try predict_draft if you need substitutions."
     except Exception as e:
         output = f"Something went wrong, sorry about that. \n" \
                  "If this is still breaking, ping ProjektZero for support. \n" \
@@ -88,12 +88,29 @@ async def profile(ctx, entity):
 
 
 @bot.command(name='predict_draft')
-async def predict_draft(ctx, blue1, blue2, blue3, blue4, blue5, red1, red2, red3, red4, red5):
+async def predict_draft(ctx, blue_team, blue1, blue2, blue3, blue4, blue5, red_team, red1, red2, red3, red4, red5):
     prelim = "```Calculating...```"
     message = await ctx.send(content=prelim)
 
     try:
-        output = mp.main(blue1, blue2, blue3, blue4, blue5, red1, red2, red3, red4, red5)
+        output = mp.predict_draft(blue_team, blue1, blue2, blue3, blue4, blue5,
+                                  red_team, red1, red2, red3, red4, red5)
+    except Exception as e:
+        output = f"Something went wrong, sorry about that. \n" \
+                 "If this is still breaking, ping ProjektZero for support. \n" \
+                 "Error: \n" \
+                 f"```{e}```"
+    await message.edit(content=output)
+
+
+@bot.command(name='mock_draft')
+async def mock_draft(ctx, blue1, blue2, blue3, blue4, blue5,
+                     red1, red2, red3, red4, red5):
+    prelim = "```Calculating...```"
+    message = await ctx.send(content=prelim)
+
+    try:
+        output = mp.mock_draft(blue1, blue2, blue3, blue4, blue5, red1, red2, red3, red4, red5)
     except Exception as e:
         output = f"Something went wrong, sorry about that. \n" \
                  "If this is still breaking, ping ProjektZero for support. \n" \

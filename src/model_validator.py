@@ -25,7 +25,6 @@ region_lookup = {"KR": ["CK", "KeSPA", "LAS", "LCK", "LCKC", "LCK CL"],
                  "INTL": ["IEM", "IWCI", "MSC", "MSI", "Riot", "WLDs"]}
 
 
-
 def validate_team_elo(teams: pd.DataFrame, directory: Path, graph: bool):
     """
     Validate model performance of Team Elo model.
