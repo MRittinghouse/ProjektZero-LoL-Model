@@ -89,5 +89,5 @@ Each of the four models' predictions is output in the document, so you can see t
 
 **Ensemble Tested Accuracy: 63.40, Log Loss: 63.83% - on Dec 23, 2021**
 
-** Experimental ML Model Accuracy: 65.601% - on Dec 28, 2021** - this is still experimental and under development. 
+**Experimental ML Model Accuracy: 65.601% - on Dec 28, 2021** - this is still experimental and under development. 
  
