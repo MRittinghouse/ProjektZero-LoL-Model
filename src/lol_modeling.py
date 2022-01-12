@@ -25,6 +25,7 @@ import src.oracles_elixir as oe
 import pandas as pd
 from scipy.stats import norm
 import trueskill
+from typing import Optional
 
 
 # Function Library
@@ -44,18 +45,24 @@ def q90(x: pd.Series) -> pd.Series:
     return np.percentile(x, q=90)
 
 
-def elo_calculator(df: pd.DataFrame, entity: str, start_elo: int = 1200, k: int = 28) -> pd.DataFrame:
+def elo_calculator(df: pd.DataFrame, entity: str,
+                   start_elo: int = 1200, k: int = 28,
+                   league_modifiers: Optional[dict] = None) -> pd.DataFrame:
     """
     Calculate elo from Pandas dataframe.
 
     Attributes
     ----------
-        df (DataFrame): must contain winning team ['team']
-                        and losing opponent ['opponent'] in order by game date
-        entity: str ("team" or "player")
+        df: pd.DataFrame
+            Must contain winning team ['team'] and losing opponent ['opponent'] in order by game date
+        entity: str
              The entity to calculate elo upon (team or player)
-        start_elo (optional): identifies the starting Elo (default=1200)
-        k (optional): provides the k-factor for the calcuation (default=28)
+        start_elo: int
+            Identifies the starting Elo (default=1200)
+        k: int
+            The k-factor for the elo calculation (default=28)
+        league_modifiers: dict
+            Dictionary containing League names as the keys and weights from 0 to 1 as values.
     """
     # Variable Definitions
     elo_results = {}
@@ -724,17 +731,18 @@ def dk_enrich(oe_data: pd.DataFrame, entity: str):
     return oe_data
 
 
-def enrich_ema_statistics(oe_data: pd.DataFrame, entity: str,):
+def enrich_ema_statistics(oe_data: pd.DataFrame, entity: str):
+    oe_data["kda"] = (oe_data["kills"] + oe_data["assists"]) / oe_data["deaths"]
     if entity == 'team':
         identity = 'teamid'
         columns = ['kills', 'deaths', 'assists', 'earned gpm', 'gamelength',
                    'firstblood', 'dragons', 'barons', 'towers',
-                   'goldat15', 'xpat15', 'csat15', 'golddiffat15', 'xpdiffat15', 'csdiffat15', 'dkpoints']
+                   'goldat15', 'xpat15', 'csat15', 'golddiffat15', 'xpdiffat15', 'csdiffat15', 'dkpoints', 'kda',]
     elif entity == 'player':
         identity = 'playerid'
         columns = ['kills', 'deaths', 'assists', 'total cs', 'earned gpm', 'earnedgoldshare', 'gamelength',
                    'goldat15', 'xpat15', 'csat15', 'assistsat15', 'deathsat15',
-                   'golddiffat15', 'xpdiffat15', 'csdiffat15', 'dkpoints']
+                   'golddiffat15', 'xpdiffat15', 'csdiffat15', 'dkpoints', 'kda']
     else:
         raise ValueError("Entity must be either team or player.")
 

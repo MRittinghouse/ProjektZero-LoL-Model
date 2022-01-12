@@ -199,7 +199,7 @@ Overall Likelihood Of {t2name} To Win Series: {t2likelihood:.2f}%
 
 def main(blue1: str, blue2: str, blue3: str, blue4: str, blue5: str,
          red1: str, red2: str, red3: str, red4: str, red5: str):
-    start = datetime.datetime.now()
+    # start = datetime.datetime.now()
 
     output = pd.DataFrame()
 
@@ -209,7 +209,7 @@ def main(blue1: str, blue2: str, blue3: str, blue4: str, blue5: str,
     match = predict_match(blue, red)
     output = pd.concat([output, match], ignore_index=True)
 
-    end = datetime.datetime.now()
+    # end = datetime.datetime.now()
 
     output = output[["blue", "red", "blue_win_chance", "deviation"]]
     output = f"""```ProjektZero Model Predictions:

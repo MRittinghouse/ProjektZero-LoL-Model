@@ -6,6 +6,25 @@ from pathlib import Path
 import seaborn as sns
 from sklearn.metrics import log_loss
 
+# Variable Definitions
+region_lookup = {"KR": ["CK", "KeSPA", "LAS", "LCK", "LCKC", "LCK CL"],
+                 "CN": ["DC", "DCup", "NEST", "LDL", "LPL"],
+                 "EU": ["BL", "BM", "CT", "DL", "EBL", "EU CS", "EUM", "GLL",
+                        "HC", "HM", "HS", "LEC", "LFL", "LPLOL", "NEXO",
+                        "NLC", "OTBLX", "PGN", "PRM", "SL", "UKLC", "UL"],
+                 "NA": ["AOL", "BIG", "CU", "EGL", "GSG", "LCS", "LCSA",
+                        "NA CS", "NASG", "NERD", "RCL", "UGP", "UPL"],
+                 "BR": ["BRCC", "CBLOL", "CBLOLA"],
+                 "TR": ["TCL", "TRA"],
+                 "CIS": ["LCL", "CISC"],
+                 "SEA": ["GPL", "LNL", "PCS"],
+                 "VIET": ["VCS"],
+                 "JPN": ["LJL", "LJLA", "LJLCS"],
+                 "OCE": ["LCO", "OCS", "OPL"],
+                 "LATAM": ["LHE", "LLA", "LMF", "LVP DDH"],
+                 "INTL": ["IEM", "IWCI", "MSC", "MSI", "Riot", "WLDs"]}
+
+
 
 def validate_team_elo(teams: pd.DataFrame, directory: Path, graph: bool):
     """

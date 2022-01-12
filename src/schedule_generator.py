@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 import json
 from os import getenv
 import pandas as pd
+from pathlib import Path
 import requests
 from typing import Optional
 
@@ -95,6 +96,7 @@ def upcoming_schedule(leagues: Optional[str], misnomer_lookup: dict,
         schedule = list(filter(lambda game: game["league"] in leagues, schedule))
 
     # Filter Games By Date Range
+    days = int(days)
     current_date = dt.datetime.now()
     future_date = current_date + dt.timedelta(days=days)
     tformat = "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -107,31 +109,27 @@ def upcoming_schedule(leagues: Optional[str], misnomer_lookup: dict,
     for i in upcoming:
         if i["team1Code"] == "TBD" or i["team2Code"] == "TBD":
             upcoming.remove(i)
-    upcoming = map(
-        lambda x: {
-            x["matchId"]: [
-                __team_namer(x["team1Name"], misnomer_lookup),
-                __team_namer(x["team2Name"], misnomer_lookup),
-            ]
-        },
-        upcoming
-    )
-    upcoming = dict(j for i in upcoming for j in i.items())
+
+    upcoming = pd.DataFrame(upcoming)
 
     return upcoming
 
 
 def main():
+    filepath = Path.cwd().parent
+
     matches = upcoming_schedule(leagues=None,
                                 misnomer_lookup=misnomers,
                                 api_url=url, api_key=key,
-                                days=7)
+                                days=6)
 
-    # Once we have matches again...make this a dataframe.
-    # Then render the dataframe to .csv so it can be queried.
-
-    if matches:
-        print(matches)
+    if isinstance(matches, pd.DataFrame):
+        matches = matches[["league", "team1Name", "team2Name", "startTime", "seriesType"]]
+        matches = matches.rename(columns={'team1Name': 'Blue',
+                                          'team2Name': 'Red',
+                                          'startTime': 'Start (UTC Time)',
+                                          'seriesType': 'Type'})
+        matches.to_csv(filepath.joinpath('data', 'processed', 'schedule.csv'), index=False)
         return matches
     else:
         print("Nothing to see here. Move along.")
