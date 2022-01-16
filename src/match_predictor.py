@@ -14,7 +14,7 @@ from scipy.stats import norm
 from src.team import Team
 from src.model_validator import generate_validation_metrics
 
-pd.options.display.float_format = '{:,.3f}'.format
+pd.options.display.float_format = '{:,.4f}'.format
 
 
 def predict_match(blue: Team, red: Team) -> pd.DataFrame:

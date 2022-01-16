@@ -32,7 +32,7 @@ async def schedule(ctx, league):
     try:
         output = pd.read_csv(Path.cwd().parent.joinpath('data', 'processed', 'schedule.csv'))
         output = output[output["league"] == league].drop(['league'], axis=1).reset_index(drop=True)
-        output = f"Upcoming {league} Games (Next 10 Games Within One Week): \n \n" \
+        output = f"Upcoming {league} Games (Next 10 Games Within 5 Days): \n \n" \
                  f"`{output.head(10).to_markdown()}` \n \n" \
                  "NOTE: Win percentages use the last fielded roster! Try predict_draft if you need substitutions."
     except Exception as e:

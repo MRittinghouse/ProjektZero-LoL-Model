@@ -42,7 +42,8 @@ def __team_namer(team_name: str) -> str:
         "NONGSHIM REDFORCE": "Nongshim RedForce",
         "NongShim REDFORCE": "Nongshim RedForce",
         "EXCEL": "Excel Esports",
-        "Dignitas QNTMPAY": "Dignitas"
+        "Dignitas QNTMPAY": "Dignitas",
+        "Immortals Progressive": "Immortals"
     }
 
     if team_name in misnomers.keys():
@@ -146,7 +147,7 @@ def main():
 
     matches = upcoming_schedule(leagues=None,
                                 api_url=url, api_key=key,
-                                days=6)
+                                days=5)
 
     if isinstance(matches, pd.DataFrame):
         matches = matches[["league", "team1Name", "team2Name", "startTime", "seriesType"]]
