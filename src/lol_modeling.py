@@ -617,15 +617,15 @@ def ewm_model(df: pd.DataFrame, entity: str) -> pd.DataFrame:
 
     red_side = df[df['side'] == 'Red'].copy()
     red_side['red_side_ema_before'] = (red_side.groupby(identity)['result']
-                                       .transform(lambda x: x.ewm(halflife=5).mean().shift().bfill()))
+                                       .transform(lambda x: x.ewm(halflife=5, ignore_na=True).mean().shift().bfill()))
     red_side['red_side_ema_after'] = (red_side.groupby(identity)['result']
-                                      .transform(lambda x: x.ewm(halflife=5).mean()))
+                                      .transform(lambda x: x.ewm(halflife=5, ignore_na=True).mean()))
 
     blue_side = df[df['side'] == 'Blue'].copy()
     blue_side['blue_side_ema_before'] = (blue_side.groupby(identity)['result']
-                                         .transform(lambda x: x.ewm(halflife=5).mean().shift().bfill()))
+                                         .transform(lambda x: x.ewm(halflife=5, ignore_na=True).mean().shift().bfill()))
     blue_side['blue_side_ema_after'] = (blue_side.groupby(identity)['result']
-                                        .transform(lambda x: x.ewm(halflife=5)
+                                        .transform(lambda x: x.ewm(halflife=5, ignore_na=True)
                                                    .mean()))
 
     merged = pd.concat([blue_side, red_side], ignore_index=True)
@@ -676,16 +676,18 @@ def egpm_model(data: pd.DataFrame, entity: str) -> pd.DataFrame:
                                          data[opp_mu]))
     data['egpm_dominance_ema_before'] = (data.groupby([identity])
                                          ['egpm_dominance_ratio']
-                                         .transform(lambda x: x.ewm(halflife=9).mean().shift().bfill()))
+                                         .transform(lambda x: x.ewm(halflife=9, ignore_na=True)
+                                                    .mean().shift().bfill()))
     data['egpm_dominance_ema_after'] = (data.groupby([identity])
                                         ['egpm_dominance_ratio']
-                                        .transform(lambda x: x.ewm(halflife=9).mean()))
+                                        .transform(lambda x: x.ewm(halflife=9, ignore_na=True).mean()))
     data['opp_egpm_dominance_ema_before'] = (data.groupby([identity])
                                              ['opp_egpm_dominance_ratio']
-                                             .transform(lambda x: x.ewm(halflife=9).mean().shift().bfill()))
+                                             .transform(lambda x: x.ewm(halflife=9, ignore_na=True)
+                                                        .mean().shift().bfill()))
     data['opp_egpm_dominance_ema_after'] = (data.groupby([identity])
                                             ['opp_egpm_dominance_ratio']
-                                            .transform(lambda x: x.ewm(halflife=9).mean()))
+                                            .transform(lambda x: x.ewm(halflife=9, ignore_na=True).mean()))
 
     data['egpm_dominance_win_perc'] = (data['egpm_dominance_ema_before'] /
                                        (data['egpm_dominance_ema_before'] +
@@ -748,8 +750,8 @@ def enrich_ema_statistics(oe_data: pd.DataFrame, entity: str):
 
     for col in columns:
         oe_data[f'{col}_ema_after'] = (oe_data.groupby([identity])[col]
-                                       .transform(lambda x: x.ewm(halflife=5).mean()))
+                                       .transform(lambda x: x.ewm(halflife=5, ignore_na=True).mean()))
         oe_data[f'{col}_ema_before'] = (oe_data.groupby([identity])[col]
-                                        .transform(lambda x: x.ewm(halflife=9).mean().shift().bfill()))
+                                        .transform(lambda x: x.ewm(halflife=9, ignore_na=True).mean().shift().bfill()))
 
     return oe_data

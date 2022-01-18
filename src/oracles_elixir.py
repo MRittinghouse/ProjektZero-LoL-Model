@@ -163,7 +163,6 @@ def clean_data(oe_data: pd.DataFrame,
     This function is optional, and provided as a convenience to help make the data more consistent and user-friendly.
 
     The date column will be formatted appropriately as a datetime object.
-    Only games with datacompletness = complete will be kept.
     Any games with 'unknown team' or 'unknown player' will be dropped.
     Any games with null game ids will be dropped.
     Opponent metrics will be enriched into the dataframe.
@@ -193,10 +192,6 @@ def clean_data(oe_data: pd.DataFrame,
                               "gameid": "str",
                               "playerid": "str",
                               "teamid": "str"})
-
-    # Keep Only "Complete" Games
-    oe_data = oe_data[oe_data["datacompleteness"] != "partial"].copy()
-    oe_data = oe_data.drop(columns=["datacompleteness"], axis=1)
 
     # Format IDs & Remove Any Games With Null GameIDs
     oe_data["gameid"] = oe_data["gameid"].str.strip()

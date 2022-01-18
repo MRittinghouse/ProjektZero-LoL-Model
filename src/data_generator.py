@@ -75,8 +75,7 @@ def enrich_dataset(player_data: pd.DataFrame,
     player_data.to_csv(filepath.joinpath('data', 'interim', 'player_data.csv'), index=False)
 
     # Flatten Data Frame / Render
-    team_data = team_data.sort_values(['teamid', 'date']).reset_index(drop=True)
-    flattened_teams = team_data.groupby('teamid').nth(-1).reset_index(drop=True)
+    flattened_teams = team_data.sort_values(['teamid', 'date']).groupby('teamid').tail(1).reset_index(drop=True)
     flattened_teams = flattened_teams[["date", "league", "teamname",
                                        "team_elo_after", "trueskill_sum_mu",
                                        "trueskill_sum_sigma", "egpm_dominance_ema_after",
