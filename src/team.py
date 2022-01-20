@@ -46,6 +46,8 @@ class Team:
     def __post_init__(self):
         # Data Import
         self.team_exists = False
+        if not self.side:
+            self.side = "Blue"
         team_data = pd.read_csv(Path.cwd().parent.joinpath('data', 'processed', 'flattened_teams.csv'))
         lower_name = str(self.name).lower()
         team_data = team_data[team_data.teamname.str.lower().isin([lower_name])].reset_index(drop=True)
@@ -57,7 +59,7 @@ class Team:
             self.team_elo = team_data.team_elo.mean()
             self.team_trueskill_mu = team_data.trueskill_sum_mu.mean()
             self.team_trueskill_sigma = team_data.trueskill_sum_sigma.mean()
-        elif lower_name in ["First 5", "Second 5"]:
+        elif lower_name in ["first 5", "second 5"]:
             pass
         else:
             self.warning += f"""\n WARNING: Team "{str(self.name)}" not found in database. No team data was used."""
@@ -97,4 +99,4 @@ class Team:
 
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):
-    print(Team(name="Hanwha Life Esports"), side="Red")
+    print(Team(name="Golden Guardians", side="Red"))

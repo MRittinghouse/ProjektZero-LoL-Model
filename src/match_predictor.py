@@ -241,9 +241,9 @@ def mock_draft(blue1: str, blue2: str, blue3: str, blue4: str, blue5: str,
     output = f"""```ProjektZero Model Predictions:
 {output.copy()}"""
 
-    if blue.warning:
+    if blue.warning != '\n WARNING: Team "First 5" not found in database. No team data was used.':
         output += f"\n{blue.warning}"
-    if red.warning:
+    if red.warning != '\n WARNING: Team "Second 5" not found in database. No team data was used.':
         output += f"\n{red.warning}"
 
     output += """\n \nPlease consider supporting my obsessive coding habit at: 

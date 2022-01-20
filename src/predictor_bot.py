@@ -12,6 +12,7 @@ from os import getenv
 import pandas as pd
 from pathlib import Path
 import src.match_predictor as mp
+from src.team import Team
 import nest_asyncio
 
 nest_asyncio.apply()
@@ -34,7 +35,7 @@ async def schedule(ctx, league):
         output = output[output["league"] == league].drop(['league'], axis=1).reset_index(drop=True)
         output = f"Upcoming {league} Games (Next 10 Games Within 5 Days): \n \n" \
                  f"`{output.head(10).to_markdown()}` \n \n" \
-                 "NOTE: Win percentages use the last fielded roster! Try predict_draft if you need substitutions."
+                 "`NOTE: Win percentages use the last fielded roster! Try predict_draft if you need substitutions.`"
     except Exception as e:
         output = f"Something went wrong, sorry about that. \n" \
                  "If this is still breaking, ping ProjektZero for support. \n" \
@@ -111,6 +112,25 @@ async def mock_draft(ctx, blue1, blue2, blue3, blue4, blue5,
 
     try:
         output = mp.mock_draft(blue1, blue2, blue3, blue4, blue5, red1, red2, red3, red4, red5)
+    except Exception as e:
+        output = f"Something went wrong, sorry about that. \n" \
+                 "If this is still breaking, ping ProjektZero for support. \n" \
+                 "Error: \n" \
+                 f"```{e}```"
+    await message.edit(content=output)
+
+
+@bot.command(name='roster')
+async def mock_draft(ctx, team):
+    prelim = "```Calculating...```"
+    message = await ctx.send(content=prelim)
+
+    try:
+        team_data = Team(name=team)
+        players = [team_data.top, team_data.jng, team_data.mid, team_data.bot, team_data.sup]
+        output = f"```{team} Last Fielded Roster: \n \n" \
+                 f"{players} \n" \
+                 "NOTE: This model does NOT track substitutions/roster swaps for upcoming games!```"
     except Exception as e:
         output = f"Something went wrong, sorry about that. \n" \
                  "If this is still breaking, ping ProjektZero for support. \n" \
