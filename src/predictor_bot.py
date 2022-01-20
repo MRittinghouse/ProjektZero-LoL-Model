@@ -56,7 +56,7 @@ async def profile(ctx, entity):
         lower_entity = str(entity).lower()
 
         if lower_entity in players_list:
-            data = players[players.playername.str.lower() == lower_entity].to_dict(orient="records")[0]
+            data = players[players.playername.str.lower() == lower_entity].to_dict(orient="records")[-1]
             output = f"{entity} Profile: \n \n" \
                      f"`Position: {data['position']} \n" \
                      f"Elo: {data['player_elo']:.2f} \n" \
@@ -67,7 +67,7 @@ async def profile(ctx, entity):
                      f"CS Diff At 15: {data['csdiffat15']:.2f} \n" \
                      f"DK Points: {data['dkpoints']:.2f}`"
         elif lower_entity in teams_list:
-            data = teams[teams.teamname.str.lower() == lower_entity].to_dict(orient="records")[0]
+            data = teams[teams.teamname.str.lower() == lower_entity].to_dict(orient="records")[-1]
             output = f"{entity} Profile: \n \n" \
                      f"`Elo: {data['team_elo']:.2f} \n" \
                      f"TrueSkill Mu: {data['trueskill_sum_mu']:.2f} \n" \

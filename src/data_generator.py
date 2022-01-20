@@ -89,8 +89,8 @@ def enrich_dataset(player_data: pd.DataFrame,
                                                       'dkpoints_ema_after': 'dkpoints'})
     flattened_teams.to_csv(filepath.joinpath('data', 'processed', 'flattened_teams.csv'), index=False)
 
-    player_data = player_data.sort_values(['playerid', 'date']).reset_index(drop=True)
-    flattened_players = player_data.groupby('playerid').nth(-1).reset_index(drop=True)
+    flattened_players = (player_data.sort_values(['playerid', 'date']).groupby(['playerid', 'teamid'])
+                         .tail(1).reset_index(drop=True))
     flattened_players = flattened_players[["date", "league", "teamname", "position",
                                            "playername", "player_elo_after", "trueskill_mu",
                                            "trueskill_sigma", "egpm_dominance_ema_after",
