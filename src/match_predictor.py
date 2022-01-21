@@ -55,9 +55,9 @@ def predict_match(blue: Team, red: Team) -> pd.DataFrame:
                         weights["egpm_dom_accuracy"] + 0.15)
         match["blue_win_chance"] = ((match["team_elo"] * (weights["team_accuracy"]/sum_accuracy)) +
                                     (match["player_elo"] * (weights["player_accuracy"]/sum_accuracy)) +
-                                    (match["team_trueskill"] * (weights["trueskill_accuracy"]/sum_accuracy)) +
-                                    (match["player_trueskill"] * (weights["trueskill_accuracy"]/sum_accuracy)) +
-                                    (match["egpm_dom"] * (weights["egpm_dom_accuracy"]/sum_accuracy)) +
+                                    (match["team_trueskill"] * ((weights["trueskill_accuracy"] / sum_accuracy) / 2)) +
+                                    (match["player_trueskill"] * ((weights["trueskill_accuracy"] / sum_accuracy) / 2)) +
+                                    (match["egpm_dom"] * (weights["egpm_dom_accuracy"]/sum_accuracy)) +  # player-based
                                     (match["side_win"] * (0.065/sum_accuracy)))
         match["deviation"] = match[["team_elo", "player_elo", "team_trueskill",
                                     "player_trueskill", "egpm_dom", "side_win"]].std(axis=1)
