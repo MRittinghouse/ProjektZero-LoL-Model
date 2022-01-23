@@ -89,14 +89,30 @@ async def profile(ctx, entity):
     await ctx.send(content=output)
 
 
-@bot.command(name='predict_draft')
-async def predict_draft(ctx, blue_team, blue1, blue2, blue3, blue4, blue5, red_team, red1, red2, red3, red4, red5):
+@bot.command(name='predict')
+async def predict(ctx, blue_team, blue1, blue2, blue3, blue4, blue5, red_team, red1, red2, red3, red4, red5):
     prelim = "```Calculating...```"
     message = await ctx.send(content=prelim)
 
     try:
-        output = mp.predict_draft(blue_team, blue1, blue2, blue3, blue4, blue5,
-                                  red_team, red1, red2, red3, red4, red5)
+        output = mp.predict(blue_team, blue1, blue2, blue3, blue4, blue5,
+                            red_team, red1, red2, red3, red4, red5, False)
+    except Exception as e:
+        output = f"Something went wrong, sorry about that. \n" \
+                 "If this is still breaking, ping ProjektZero for support. \n" \
+                 "Error: \n" \
+                 f"```{e}```"
+    await message.edit(content=output)
+
+
+@bot.command(name='predict_verbose')
+async def predict_verbose(ctx, blue_team, blue1, blue2, blue3, blue4, blue5, red_team, red1, red2, red3, red4, red5):
+    prelim = "```Calculating...```"
+    message = await ctx.send(content=prelim)
+
+    try:
+        output = mp.predict(blue_team, blue1, blue2, blue3, blue4, blue5,
+                            red_team, red1, red2, red3, red4, red5, True)
     except Exception as e:
         output = f"Something went wrong, sorry about that. \n" \
                  "If this is still breaking, ping ProjektZero for support. \n" \

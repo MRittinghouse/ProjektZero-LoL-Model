@@ -10,6 +10,7 @@ Tim provides an invaluable service to the League community.
 # Housekeeping
 import itertools
 import math
+import numpy as np
 import pandas as pd
 from scipy.stats import norm
 from src.team import Team
@@ -25,10 +26,10 @@ def predict_match(blue: Team, red: Team) -> pd.DataFrame:
         return blue_win_perc
 
     def trueskill_prediction(blue_team_mu: float, blue_team_sigma: list,
-                             red_team_mu: float, red_team_sigma: list) -> float:
+                             red_team_mu: float, red_team_sigma: list, sigma_value: float) -> float:
         delta_mu = (blue_team_mu - red_team_mu)
         sum_sig = sum(r ** 2 for r in itertools.chain(blue_team_sigma, red_team_sigma))
-        denominator = math.sqrt(10 * (4.1666666667 ** 2) + sum_sig)
+        denominator = math.sqrt(10 * ((sigma_value / 2) ** 2) + sum_sig)
         blue_win_perc = norm.cdf(delta_mu / denominator)
         return blue_win_perc
 
@@ -38,23 +39,16 @@ def predict_match(blue: Team, red: Team) -> pd.DataFrame:
 
     weights = generate_validation_metrics(graph=False)
 
-    def scale_egpm(win_perc: float) -> float:
-        min_tune = 0.125
-        max_tune = 0.875
-        team_min = 0.261964
-        team_max = 0.695982
-        base_std = (win_perc - team_min) / (team_max - team_min)
-        scaled_win_perc = base_std * (max_tune - min_tune) + min_tune
-        return scaled_win_perc
-
     match = pd.DataFrame({"blue": [blue.name],
                           "red": [red.name],
                           "player_elo": [elo_prediction(blue.player_elo, red.player_elo)],
                           "player_trueskill": [trueskill_prediction(blue.player_trueskill_mu,
                                                                     blue.player_trueskill_sigma,
                                                                     red.player_trueskill_mu,
-                                                                    red.player_trueskill_sigma)],
-                          "egpm_dom": [scale_egpm(standard_prediction(blue.egpm_dominance, red.egpm_dominance))],
+                                                                    red.player_trueskill_sigma,
+                                                                    sigma_value=2.75)],
+                          "team_egpm_dom": [standard_prediction(blue.team_egpm_dom, red.team_egpm_dom)],
+                          "player_egpm_dom": [standard_prediction(blue.player_egpm_dom, red.player_egpm_dom)],
                           "side_win": [standard_prediction(blue.side_win_rate, red.side_win_rate)]})
 
     if blue.team_exists and red.team_exists:
@@ -65,18 +59,19 @@ def predict_match(blue: Team, red: Team) -> pd.DataFrame:
         match["blue_win_chance"] = ((match["team_elo"] * (weights["team_accuracy"]/sum_accuracy)) +
                                     (match["player_elo"] * (weights["player_accuracy"]/sum_accuracy)) +
                                     (match["player_trueskill"] * (weights["trueskill_accuracy"] / sum_accuracy)) +
-                                    (match["egpm_dom"] * (weights["egpm_dom_accuracy"]/sum_accuracy)) +
+                                    (match["team_egpm_dom"] * (weights["egpm_dom_accuracy"]/sum_accuracy)) +
                                     (match["side_win"] * (weights["side_ema_accuracy"]/sum_accuracy)))
 
-        match["deviation"] = match[["team_elo", "player_elo", "player_trueskill", "egpm_dom", "side_win"]].std(axis=1)
+        match["deviation"] = match[["team_elo", "player_elo", "player_trueskill", "team_egpm_dom", "side_win"]].std(axis=1)
+        match.drop(['player_egpm_dom'], axis=1, inplace=True)
     else:
         sum_accuracy = (weights["player_accuracy"] + weights["trueskill_accuracy"] +
                         weights["egpm_dom_accuracy"] + weights["side_ema_accuracy"])
         match["blue_win_chance"] = ((match["player_elo"] * (weights["player_accuracy"]/sum_accuracy)) +
                                     (match["player_trueskill"] * (weights["trueskill_accuracy"]/sum_accuracy)) +
-                                    (match["egpm_dom"] * (weights["egpm_dom_accuracy"]/sum_accuracy)) +
+                                    (match["player_egpm_dom"] * (weights["egpm_dom_accuracy"]/sum_accuracy)) +
                                     (match["side_win"] * (weights["side_ema_accuracy"]/sum_accuracy)))
-        match["deviation"] = match[["player_elo", "player_trueskill", "egpm_dom", "side_win"]].std(axis=1)
+        match["deviation"] = match[["player_elo", "player_trueskill", "player_egpm_dom", "side_win"]].std(axis=1)
 
     return match
 
@@ -203,8 +198,9 @@ Overall Likelihood Of {t2name} To Win Series: {t2likelihood:.2f}%
     return output
 
 
-def predict_draft(blue_team: str, blue1: str, blue2: str, blue3: str, blue4: str, blue5: str,
-                  red_team: str, red1: str, red2: str, red3: str, red4: str, red5: str):
+def predict(blue_team: str, blue1: str, blue2: str, blue3: str, blue4: str, blue5: str,
+            red_team: str, red1: str, red2: str, red3: str, red4: str, red5: str,
+            verbose: bool):
 
     output = pd.DataFrame()
 
@@ -213,11 +209,10 @@ def predict_draft(blue_team: str, blue1: str, blue2: str, blue3: str, blue4: str
 
     match = predict_match(blue, red)
     output = pd.concat([output, match], ignore_index=True)
-    print(blue)
-    print(red)
-    print(match)
 
-    #output = output[["blue", "red", "blue_win_chance", "deviation"]]
+    if not verbose:
+        output = output[["blue", "red", "blue_win_chance", "deviation"]]
+
     output = "```ProjektZero Model Predictions: \n \n" \
              f"{output.copy().to_markdown()}"
 
@@ -267,10 +262,10 @@ def mock_draft(blue1: str, blue2: str, blue3: str, blue4: str, blue5: str,
 
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):
-    blue_team = Team("Team BDS", "Blue", "Adam", "Cinkrof", "NUCLEARINT", "xMatty", "Limit")
-    red_team = Team("Rogue", "Red", "Odoamne", "Malrang", "Larssen", "Comp", "Trymbi")
+    blue_team = Team("Evil Geniuses", "Impact", "Inspired", "jojopyun", "Danny", "Vulcan")
+    print(blue_team.team_egpm_dom)
+    red_team = Team("Golden Guardians", "Tony Top", "Iconic", "ry0ma", "Stixxay", "Chime")
+    print(red_team.team_egpm_dom)
 
-    print(predict_draft("Team BDS", "Adam", "Cinkrof", "NUCLEARINT", "xMatty", "LIMIT",
-                        "Rogue", "Odoamne", "Malrang", "Larssen", "Comp", "Trymbi"))
-    print(predict_draft("Rogue", "Odoamne", "Malrang", "Larssen", "Comp", "Trymbi",
-                        "Team BDS", "Adam", "Cinkrof", "NUCLEARINT", "xMatty", "LIMIT"))
+    print(predict("Evil Geniuses", "Impact", "Inspired", "jojopyun", "Danny", "Vulcan",
+                  "Golden Guardians", "Tony Top", "Iconic", "ry0ma", "Stixxay", "Chime", True))

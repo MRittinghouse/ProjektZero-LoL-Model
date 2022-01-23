@@ -57,6 +57,7 @@ class Team:
             roster = self._get_last_roster(player_data)
             self.team_exists = True
             self.team_elo = team_data.team_elo.mean()
+            self.team_egpm_dom = team_data.egpm_dominance_ema_after.mean()
         elif lower_name in ["first 5", "second 5"]:
             pass
         else:
@@ -94,7 +95,7 @@ class Team:
         self.player_elo = data.player_elo.mean()
         self.player_trueskill_mu = data.trueskill_mu.sum()
         self.player_trueskill_sigma = data.trueskill_sigma.to_list()
-        self.egpm_dominance = data.egpm_dominance_ema_after.sum()
+        self.player_egpm_dom = data.egpm_dominance_ema_after.sum()
         self.side_win_rate = data.blue_side_ema_after.mean() if self.side.lower() == "blue" \
             else data.red_side_ema_after.mean()
 

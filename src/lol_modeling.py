@@ -245,6 +245,7 @@ def player_elo(df: pd.DataFrame, start: int = 1200, k: int = 28) -> pd.DataFrame
 
     return df
 
+
 def aggregate_player_elos(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.DataFrame:
     """
     Aggregate individual player elos to a mean elo per team per match.
@@ -278,8 +279,8 @@ def aggregate_player_elos(player_data: pd.DataFrame, team_data: pd.DataFrame) ->
     return team_data
 
 
-def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> Tuple[
-    Optional[DataFrame], Optional[DataFrame], Dict[Any, Any]]:
+def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame,
+                    initial_sigma: float = 8.33) -> Tuple[Optional[DataFrame], Optional[DataFrame], Dict[Any, Any]]:
     r"""
     Calculate team ranking using Microsoft's TrueSkill 1 algorithm.
     Reference: https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/
@@ -317,7 +318,7 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> Tuple
     ts = trueskill.TrueSkill(draw_probability=0.0)
     player_ratings_dict = dict()
     for i in input_data['playerid'].unique():
-        player_ratings_dict[i] = ts.create_rating()
+        player_ratings_dict[i] = ts.create_rating(sigma=initial_sigma)
 
     def setup_match(df: pd.DataFrame) -> np.array:
         # Prepare DataFrame
@@ -367,11 +368,11 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> Tuple
         return output_array
 
     col_names = ['gameid', 'date', 'league', 'ckpm', 'blue_earned_gpm',
-                'blue_kpm', 'blue_team', 'blue_team_id', 'blue_top_name', 'blue_jng_name',
-                'blue_mid_name', 'blue_bot_name', 'blue_sup_name',
-                'blue_team_result', 'red_team', 'red_team_id', 'red_earned_gpm', 'red_kpm',
-                'red_top_name', 'red_jng_name', 'red_mid_name',
-                'red_bot_name', 'red_sup_name']
+                 'blue_kpm', 'blue_team', 'blue_team_id', 'blue_top_name', 'blue_jng_name',
+                 'blue_mid_name', 'blue_bot_name', 'blue_sup_name',
+                 'blue_team_result', 'red_team', 'red_team_id', 'red_earned_gpm', 'red_kpm',
+                 'red_top_name', 'red_jng_name', 'red_mid_name',
+                 'red_bot_name', 'red_sup_name']
 
     lcs_rating = pd.DataFrame(setup_match(input_data), columns=col_names)
 
@@ -705,31 +706,24 @@ def egpm_model(data: pd.DataFrame, entity: str) -> pd.DataFrame:
                                          opp_elo))
     data['egpm_dominance_ema_before'] = (data.groupby([identity])
                                          ['egpm_dominance_ratio']
-                                         .transform(lambda x: x.ewm(halflife=9, ignore_na=True)
+                                         .transform(lambda x: x.ewm(halflife=5, ignore_na=True)
                                                     .mean().shift().bfill()))
     data['egpm_dominance_ema_after'] = (data.groupby([identity])
                                         ['egpm_dominance_ratio']
-                                        .transform(lambda x: x.ewm(halflife=9, ignore_na=True).mean()))
+                                        .transform(lambda x: x.ewm(halflife=5, ignore_na=True).mean()))
     data['opp_egpm_dominance_ema_before'] = (data.groupby([identity])
                                              ['opp_egpm_dominance_ratio']
-                                             .transform(lambda x: x.ewm(halflife=9, ignore_na=True)
+                                             .transform(lambda x: x.ewm(halflife=5, ignore_na=True)
                                                         .mean().shift().bfill()))
     data['opp_egpm_dominance_ema_after'] = (data.groupby([identity])
                                             ['opp_egpm_dominance_ratio']
-                                            .transform(lambda x: x.ewm(halflife=9, ignore_na=True).mean()))
+                                            .transform(lambda x: x.ewm(halflife=5, ignore_na=True).mean()))
 
     data['egpm_dominance_win_perc'] = (data['egpm_dominance_ema_before'] /
                                        (data['egpm_dominance_ema_before'] +
                                         data['opp_egpm_dominance_ema_before']))
     data['egpm_dominance_win_perc'] = data['egpm_dominance_win_perc'].fillna(0.5)
     data['egpm_dominance_diff'] = data['egpm_dominance_ema_before'] - data['opp_egpm_dominance_ema_before']
-
-    # Scale Win Perc (derived from sklearn MinMaxScaler)
-    min_tune = 0.125
-    max_tune = 0.875
-    base = data['egpm_dominance_win_perc']
-    base_std = (base - base.min(axis=0)) / (base.max(axis=0) - base.min(axis=0))
-    data['scaled_egpm_win_perc'] = base_std * (max_tune - min_tune) + min_tune
 
     return data
 
