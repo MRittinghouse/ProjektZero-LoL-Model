@@ -16,6 +16,8 @@ import datetime as dt
 from pathlib import Path
 import pandas as pd
 from typing import Tuple
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.naive_bayes import GaussianNB
 import src.lol_modeling as lol
 import src.oracles_elixir as oe
 
@@ -53,7 +55,7 @@ def enrich_dataset(player_data: pd.DataFrame,
     team_data = lol.aggregate_player_elos(player_data, team_data)
 
     # Enrich Team TrueSkill
-    player_data, team_data = lol.trueskill_model(player_data, team_data)
+    #player_data, team_data, ts_lookup = lol.trueskill_model(player_data, team_data)
 
     # EGPM Model - TrueSkill Normalized Earned Gold
     team_data = lol.egpm_model(team_data, "team")
@@ -78,7 +80,7 @@ def enrich_dataset(player_data: pd.DataFrame,
     flattened_teams = team_data.sort_values(['teamid', 'date']).groupby('teamid').tail(1).reset_index(drop=True)
     flattened_teams = flattened_teams[["date", "league", "teamname",
                                        "team_elo_after", "trueskill_sum_mu",
-                                       "trueskill_sum_sigma", "egpm_dominance_ema_after",
+                                       "trueskill_sigma_squared", "egpm_dominance_ema_after",
                                        "blue_side_ema_after", "red_side_ema_after",
                                        "kda_ema_after", "golddiffat15_ema_after",
                                        "csdiffat15_ema_after", "dkpoints_ema_after"]]
@@ -92,7 +94,7 @@ def enrich_dataset(player_data: pd.DataFrame,
     flattened_players = (player_data.sort_values(['playerid', 'date']).groupby(['playerid', 'teamid'])
                          .tail(1).reset_index(drop=True))
     flattened_players = flattened_players[["date", "league", "teamname", "position",
-                                           "playername", "player_elo_after", "trueskill_mu",
+                                           "playername", "playerid", "player_elo_after", "trueskill_mu",
                                            "trueskill_sigma", "egpm_dominance_ema_after",
                                            "blue_side_ema_after", "red_side_ema_after",
                                            "kda_ema_after", "golddiffat15_ema_after",
@@ -102,6 +104,10 @@ def enrich_dataset(player_data: pd.DataFrame,
                                                           'golddiffat15_ema_after': 'golddiffat15',
                                                           'csdiffat15_ema_after': 'csdiffat15',
                                                           'dkpoints_ema_after': 'dkpoints'})
+    flattened_players[["trueskill_mu_after",
+                       "trueskill_sigma_after"]] = flattened_players.apply(lambda row: [ts_lookup[row.playerid].mu,
+                                                                                        ts_lookup[row.playerid].sigma],
+                                                                           axis=1, result_type='expand')
     flattened_players.to_csv(filepath.joinpath('data', 'processed', 'flattened_players.csv'), index=False)
 
     return team_data, player_data

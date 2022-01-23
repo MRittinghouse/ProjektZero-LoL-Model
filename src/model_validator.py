@@ -6,6 +6,8 @@ from pathlib import Path
 import seaborn as sns
 from sklearn.metrics import log_loss
 
+sns.set_style("darkgrid")
+
 # Variable Definitions
 region_lookup = {"KR": ["CK", "KeSPA", "LAS", "LCK", "LCKC", "LCK CL"],
                  "CN": ["DC", "DCup", "NEST", "LDL", "LPL"],
@@ -65,11 +67,14 @@ def validate_team_elo(teams: pd.DataFrame, directory: Path, graph: bool):
 
         grf.ax_joint.text(teams['team_elo_before'].mean(),
                           teams['opp_team_elo'].max(),
-                          f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}')
+                          f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}',
+                          bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
 
         # Format and Export
-        grf.set_axis_labels("Blue Team Elo", "Red Team Elo")
-        plt.title('Team Elo', loc='right', y=1.1)
+        grf.set_axis_labels("Blue Team Elo", "Red Team Elo",
+                            bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
+        plt.title('Team Elo', loc='right', y=1.1,
+                  bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
 
         grf.savefig(directory.joinpath('TeamElo_Validation.png'), dpi=300, format='png')
         plt.show()
@@ -118,11 +123,14 @@ def validate_player_elo(teams: pd.DataFrame, directory: Path, graph: bool):
 
         grf.ax_joint.text(teams['player_elo_before'].mean(),
                           teams['opp_player_elo'].max(),
-                          f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}')
+                          f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}',
+                          bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
 
         # Format and Export
-        grf.set_axis_labels("Blue Players' Elo", "Red Players' Elo")
-        plt.title('Player Elo', loc='right', y=1.1)
+        grf.set_axis_labels("Blue Players' Elo", "Red Players' Elo",
+                            bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
+        plt.title('Player Elo', loc='right', y=1.1,
+                  bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
 
         grf.savefig(directory.joinpath('PlayerElo_Validation.png'), dpi=300, format='png')
         plt.show()
@@ -171,11 +179,14 @@ def validate_trueskill(teams: pd.DataFrame, directory: Path, graph: bool):
         grf.ax_joint.text((teams['trueskill_sum_mu'].mean() -
                           (teams['trueskill_sum_mu'].mean() * 0.25)),
                           teams['opponent_sum_mu'].max(),
-                          f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}')
+                          f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}',
+                          bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
 
         # Format and Export
-        grf.set_axis_labels("Blue Players' TrueSkill", "Red Players' TrueSkill")
-        plt.title('TrueSkill', loc='right', y=1.1)
+        grf.set_axis_labels("Blue Players' TrueSkill", "Red Players' TrueSkill",
+                            bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
+        plt.title('TrueSkill', loc='right', y=1.1,
+                  bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
 
         grf.savefig(directory.joinpath('TrueSkill_Validation.png'), dpi=300, format='png')
         plt.show()
@@ -222,14 +233,17 @@ def validate_egpm_dominance(teams: pd.DataFrame, directory: Path, graph: bool):
                             y='opp_egpm_dominance_ema_before',
                             hue='result')
 
-        grf.ax_joint.text((teams['egpm_dominance_ema_before'].mean() -
-                           (teams['egpm_dominance_ema_before'].mean() * 0.40)),
+        grf.ax_joint.text((teams['egpm_dominance_ema_before'].min() +
+                           (teams['egpm_dominance_ema_before'].mean() * 0.25)),
                           teams['opp_egpm_dominance_ema_before'].max(),
-                          f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}')
+                          f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}',
+                          bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
 
         # Format and Export
-        grf.set_axis_labels("Blue Players' EGPM Dominance", "Red Players' EGPM Dominance")
-        plt.title('EGPM Dominance', loc='right', y=1.1)
+        grf.set_axis_labels("Blue Players' EGPM Dominance", "Red Players' EGPM Dominance",
+                            bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
+        plt.title('EGPM Dominance', loc='right', y=1.1,
+                  bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
 
         grf.savefig(directory.joinpath('EGPMDom_Validation.png'), dpi=300, format='png')
         plt.show()
@@ -238,9 +252,59 @@ def validate_egpm_dominance(teams: pd.DataFrame, directory: Path, graph: bool):
     return correct, logloss
 
 
-# def validate_side_ewm(teams: pd.DataFrame, players: pd.DataFrame):
-# This is really hard to validate right now due to the data structure. Going to put a pin in this.
-# return
+def validate_side_ema(teams: pd.DataFrame, directory: Path, graph: bool):
+    """
+    Validate model performance of Side Win Rate Exponential Moving Average model.
+
+    Parameters
+    ----------
+    teams: pd.DataFrame
+        DataFrame containing processed data, as output by the data_generator.py file
+    directory: Path
+        Filepath pointing to the reports/figures directory.
+    graph: bool
+        Boolean value indicating whether or not to generate the optional 300 dpi .png graph image.
+
+    Returns
+    -------
+    [OPTIONAL] A 300 dpi .png image of a graph containing model validation metrics, in the directory specified.
+
+    accuracy: float
+        Variable describing the number of predictions that this model had correct.
+    logloss: float
+        Variable describing the log loss, as defined by sklearn.metrics, of the model.
+    """
+    # Data Preparation
+    teams['side_ema_expected_result'] = np.where(teams['side_ema_win_perc'] >= 0.5, 1, 0)
+    teams['result'] = teams.result.astype('int32')
+
+    # Label Accuracy and Log Loss
+    correct = len(teams[teams['side_ema_expected_result'] == teams['result']]) / len(teams)
+    logloss = log_loss(teams['result'], teams['side_ema_win_perc'], labels=[0, 1])
+
+    # Generate Graph
+    if graph:
+        grf = sns.jointplot(data=teams,
+                            x='side_ema_before',
+                            y='opp_side_ema_before',
+                            hue='result')
+
+        grf.ax_joint.text(teams['side_ema_before'].mean(),
+                          teams['opp_side_ema_before'].max(),
+                          f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}',
+                          bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
+
+        # Format and Export
+        grf.set_axis_labels("Blue Side EMA", "Red Side EMA",
+                            bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
+        plt.title('Side Win% EMA', loc='right', y=1.1,
+                  bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
+
+        grf.savefig(directory.joinpath('SideEMA_Validation.png'), dpi=300, format='png')
+        plt.show()
+        plt.clf()
+
+    return correct, logloss
 
 
 def validate_ensemble_accuracy(teams: pd.DataFrame,
@@ -248,6 +312,7 @@ def validate_ensemble_accuracy(teams: pd.DataFrame,
                                player_accuracy: float,
                                trueskill_accuracy: float,
                                egpm_dom_accuracy: float,
+                               side_ema_accuracy: float,
                                directory: Path,
                                graph: bool):
     """
@@ -267,6 +332,8 @@ def validate_ensemble_accuracy(teams: pd.DataFrame,
         The accuracy of the TrueSkill model as output by the validate_trueskill function.
     egpm_dom_accuracy: float
         The accuracy of the EGPM Dominance model as output by the validate_egpm_dominance function.
+    side_ema_accuracy: float
+        The accuracy of the Side Win EMA model as output by the validate_side_ema function.
     directory: Path
         Filepath pointing to the reports/figures directory.
     graph: bool
@@ -283,11 +350,11 @@ def validate_ensemble_accuracy(teams: pd.DataFrame,
     """
     # Data Preparation
     teams['result'] = teams.result.astype('int32')
-    sum_accuracy = team_accuracy + player_accuracy + trueskill_accuracy + egpm_dom_accuracy
+    sum_accuracy = team_accuracy + player_accuracy + egpm_dom_accuracy + side_ema_accuracy  # + trueskill_accuracy
     teams['ensemble_win_perc'] = ((teams['team_elo_win_perc'] * (team_accuracy / sum_accuracy)) +
                                   (teams['player_elo_win_perc'] * (player_accuracy / sum_accuracy)) +
-                                  (teams['trueskill_win_perc'] * (trueskill_accuracy / sum_accuracy)) +
-                                  (teams['egpm_dominance_win_perc'] * (egpm_dom_accuracy / sum_accuracy)))
+                                  (teams['egpm_dominance_win_perc'] * (egpm_dom_accuracy / sum_accuracy)) +
+                                  (teams['side_ema_win_perc'] * (side_ema_accuracy / sum_accuracy)))
     teams['opp_ensemble_win_perc'] = 1 - teams['ensemble_win_perc']
     teams['ensemble_expected_result'] = np.where(teams['ensemble_win_perc'] >= 0.5, 1, 0)
 
@@ -299,17 +366,21 @@ def validate_ensemble_accuracy(teams: pd.DataFrame,
     if graph:
         grf = sns.jointplot(data=teams,
                             x='ensemble_win_perc',
+                            xlim=(0, 1),
                             y='opp_ensemble_win_perc',
+                            ylim=(0, 1),
                             hue='result')
 
-        grf.ax_joint.text((teams['ensemble_win_perc'].mean() -
-                           (teams['ensemble_win_perc'].mean() * 0.45)),
-                          teams['opp_ensemble_win_perc'].max(),
-                          f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}')
+        grf.ax_joint.text(0.15,
+                          0.95,
+                          f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}',
+                          bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
 
         # Format and Export
-        grf.set_axis_labels("Blue Players' Ensemble Prediction", "Red Players' Ensemble Prediction")
-        plt.title('Ensemble Model', loc='right', y=1.1)
+        grf.set_axis_labels("Blue Players' Ensemble Prediction", "Red Players' Ensemble Prediction",
+                            bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
+        plt.title('Ensemble Model', loc='right', y=1.1,
+                  bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
 
         grf.savefig(directory.joinpath('EnsembleModel_Validation.png'), dpi=300, format='png')
         plt.show()
@@ -341,15 +412,17 @@ def generate_validation_metrics(graph: bool):
     pe_acc, pe_lls = validate_player_elo(team_data, directory, graph)
     ts_acc, ts_lls = validate_trueskill(team_data, directory, graph)
     ed_acc, ed_lls = validate_egpm_dominance(team_data, directory, graph)
+    se_acc, se_lls = validate_side_ema(team_data, directory, graph)
 
     # Validate Ensemble Prediction
-    es_acc, es_lls = validate_ensemble_accuracy(team_data, te_acc, pe_acc, ts_acc, ed_acc, directory, graph)
+    es_acc, es_lls = validate_ensemble_accuracy(team_data, te_acc, pe_acc, ts_acc, ed_acc, se_acc, directory, graph)
 
     # Generate Validation Variable
     validation = {"team_accuracy": te_acc, "team_logloss": te_lls,
                   "player_accuracy": pe_acc, "player_logloss": pe_lls,
                   "trueskill_accuracy": ts_acc, "trueskill_logloss": ts_lls,
                   "egpm_dom_accuracy": ed_acc, "egpm_dom_logloss": ed_lls,
+                  "side_ema_accuracy": se_acc, "side_ema_logloss": se_lls,
                   "ensemble_accuracy": es_acc, "ensemble_logloss": es_lls}
 
     return validation
@@ -366,9 +439,10 @@ def main():
     pe_acc, pe_lls = validate_player_elo(team_data, directory, True)
     ts_acc, ts_lls = validate_trueskill(team_data, directory, True)
     ed_acc, ed_lls = validate_egpm_dominance(team_data, directory, True)
+    se_acc, se_lls = validate_side_ema(team_data, directory, True)
 
     # Validate Ensemble Prediction
-    validate_ensemble_accuracy(team_data, te_acc, pe_acc, ts_acc, ed_acc, directory, True)
+    validate_ensemble_accuracy(team_data, te_acc, pe_acc, ts_acc, ed_acc, se_acc, directory, True)
 
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):

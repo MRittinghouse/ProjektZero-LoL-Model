@@ -18,6 +18,7 @@ Nothing in this code or its outputs constitutes financial advice.
 This code is intended to be imported into your analytics projects.
 """
 # Housekeeping
+import csv
 import itertools
 import math
 import numpy as np
@@ -298,18 +299,18 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
     This will be an expanded version of the team_data input.
     """
     # Data Setup
-    player_data = player_data.sort_values(by=['playerid', 'date'])
+    player_data = player_data.sort_values(['date', 'gameid', 'side', 'position']).reset_index()
 
     input_data = player_data[['gameid', 'date', 'league', 'playername', 'playerid', 'side',
                               'teamname', 'teamid', 'position', 'result', 'earned gpm',
                               'ckpm', 'team kpm']].copy()
 
-    earned_gold = (input_data.groupby(['league', 'gameid', 'date', 'teamname', 'teamid'])
+    earned_gold = (input_data.groupby(['league', 'gameid', 'date', 'teamid'])
                    ['earned gpm'].sum()
                    .reset_index())
     earned_gold = earned_gold.rename(columns={'earned gpm': 'team_egpm'})
 
-    input_data = pd.merge(input_data, earned_gold, how='left', on=['league', 'gameid', 'date', 'teamname', 'teamid'])
+    input_data = pd.merge(input_data, earned_gold, how='left', on=['league', 'gameid', 'date', 'teamid'])
     input_data = input_data.rename(columns={'team kpm': 'team_kpm'})
     input_data[['team_egpm', 'team_kpm', 'ckpm']] = input_data[['team_egpm', 'team_kpm', 'ckpm']].fillna(0)
 
@@ -321,8 +322,7 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
 
     def setup_match(df: pd.DataFrame) -> np.array:
         # Prepare DataFrame
-        df = df.sort_values(['league', 'date', 'gameid',
-                             'side', 'position']).reset_index()
+        df = df.sort_values(['date', 'gameid', 'side', 'position']).reset_index()
         df = df[['playerid', 'playername', 'date', 'result', 'teamname',
                  'league', 'ckpm', 'gameid', 'team_egpm', 'team_kpm', 'teamid']].copy().values
 
@@ -504,27 +504,27 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
 
     blue = lcs_rating[['gameid', 'date', 'blue_team', 'blue_team_id', 'blue_team_win_prob']].copy()
     blue['blue_sum_mu'] = lcs_rating[blue_mu].sum(axis=1)
-    blue['blue_sum_sigma'] = lcs_rating[blue_sigma].sum(axis=1)
+    blue['blue_sigma_squared'] = lcs_rating.apply(lambda row: sum([row[x] ** 2 for x in blue_sigma]), axis=1)
     blue['opponent_sum_mu'] = lcs_rating[red_mu].sum(axis=1)
-    blue['opponent_sum_sigma'] = lcs_rating[red_sigma].sum(axis=1)
+    blue['opponent_sigma_squared'] = lcs_rating.apply(lambda row: sum([row[x] ** 2 for x in red_sigma]), axis=1)
     blue['trueskill_diff'] = blue['blue_team_win_prob'] - 0.50
     blue = blue.rename(columns={'blue_team': 'teamname',
                                 'blue_team_id': 'teamid',
                                 'blue_sum_mu': 'trueskill_sum_mu',
-                                'blue_sum_sigma': 'trueskill_sum_sigma',
+                                'blue_sigma_squared': 'trueskill_sigma_squared',
                                 'blue_team_win_prob': 'trueskill_win_perc'})
 
     red = lcs_rating[['gameid', 'date', 'red_team', 'red_team_id']].copy()
     red['red_team_win_prob'] = 1 - lcs_rating['blue_team_win_prob']
     red['red_sum_mu'] = lcs_rating[red_mu].sum(axis=1)
-    red['red_sum_sigma'] = lcs_rating[red_sigma].sum(axis=1)
+    red['red_sigma_squared'] = lcs_rating.apply(lambda row: sum([row[x] ** 2 for x in red_sigma]), axis=1)
     red['opponent_sum_mu'] = lcs_rating[blue_mu].sum(axis=1)
-    red['opponent_sum_sigma'] = lcs_rating[blue_sigma].sum(axis=1)
+    red['opponent_sigma_squared'] = lcs_rating.apply(lambda row: sum([row[x] ** 2 for x in blue_sigma]), axis=1)
     red['trueskill_diff'] = red['red_team_win_prob'] - 0.50
     red = red.rename(columns={'red_team': 'teamname',
                               'red_team_id': 'teamid',
                               'red_sum_mu': 'trueskill_sum_mu',
-                              'red_sum_sigma': 'trueskill_sum_sigma',
+                              'red_sigma_squared': 'trueskill_sigma_squared',
                               'red_team_win_prob': 'trueskill_win_perc'})
 
     # Merge Things Back Together
@@ -536,58 +536,67 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
                           left_on=['gameid', 'date', 'teamname', 'teamid'],
                           right_on=['gameid', 'date', 'teamname', 'teamid'])
                  .reset_index(drop=True))
-    team_data.sort_values(by=['date', 'league', 'gameid', 'result'], ascending=True, inplace=True)
+    team_data.sort_values(by=['date', 'gameid', 'side'], ascending=True, inplace=True)
 
     # Merge New Information To Player Data
-    blue_iterations = {"blue_top": ["blue_top_name", "blue_top_mu", "blue_top_sigma"],
-                       "blue_jng": ["blue_jng_name", "blue_jng_mu", "blue_jng_sigma"],
-                       "blue_mid": ["blue_mid_name", "blue_mid_mu", "blue_mid_sigma"],
-                       "blue_bot": ["blue_bot_name", "blue_bot_mu", "blue_bot_sigma"],
-                       "blue_sup": ["blue_sup_name", "blue_sup_mu", "blue_sup_sigma"]}
-    red_iterations = {"red_top": ["red_top_name", "red_top_mu", "red_top_sigma"],
-                      "red_jng": ["red_jng_name", "red_jng_mu", "red_jng_sigma"],
-                      "red_mid": ["red_mid_name", "red_mid_mu", "red_mid_sigma"],
-                      "red_bot": ["red_bot_name", "red_bot_mu", "red_bot_sigma"],
-                      "red_sup": ["red_sup_name", "red_sup_mu", "red_sup_sigma"]}
+    # Blue
+    blue_top = (lcs_rating[['gameid', 'date', 'blue_team_id', 'blue_top_name',
+                            'blue_top_mu', 'blue_top_sigma']].copy()
+                .rename(columns={'blue_team_id': 'teamid', 'blue_top_name': 'playerid',
+                                 'blue_top_mu': 'trueskill_mu', 'blue_top_sigma': 'trueskill_sigma'}))
+    blue_jng = (lcs_rating[['gameid', 'date', 'blue_team_id', 'blue_jng_name',
+                            'blue_jng_mu', 'blue_jng_sigma']].copy()
+                .rename(columns={'blue_team_id': 'teamid', 'blue_jng_name': 'playerid',
+                                 'blue_jng_mu': 'trueskill_mu', 'blue_jng_sigma': 'trueskill_sigma'}))
+    blue_mid = (lcs_rating[['gameid', 'date', 'blue_team_id', 'blue_mid_name',
+                            'blue_mid_mu', 'blue_mid_sigma']].copy()
+                .rename(columns={'blue_team_id': 'teamid', 'blue_mid_name': 'playerid',
+                                 'blue_mid_mu': 'trueskill_mu', 'blue_mid_sigma': 'trueskill_sigma'}))
+    blue_bot = (lcs_rating[['gameid', 'date', 'blue_team_id', 'blue_bot_name',
+                            'blue_bot_mu', 'blue_bot_sigma']].copy()
+                .rename(columns={'blue_team_id': 'teamid', 'blue_bot_name': 'playerid',
+                                 'blue_bot_mu': 'trueskill_mu', 'blue_bot_sigma': 'trueskill_sigma'}))
+    blue_sup = (lcs_rating[['gameid', 'date', 'blue_team_id', 'blue_sup_name',
+                            'blue_sup_mu', 'blue_sup_sigma']].copy()
+                .rename(columns={'blue_team_id': 'teamid', 'blue_sup_name': 'playerid',
+                                 'blue_sup_mu': 'trueskill_mu', 'blue_sup_sigma': 'trueskill_sigma'}))
 
-    player_trueskill = pd.DataFrame()
+    # Red
+    red_top = (lcs_rating[['gameid', 'date', 'red_team_id', 'red_top_name',
+                           'red_top_mu', 'red_top_sigma']].copy()
+               .rename(columns={'red_team_id': 'teamid', 'red_top_name': 'playerid',
+                                'red_top_mu': 'trueskill_mu', 'red_top_sigma': 'trueskill_sigma'}))
+    red_jng = (lcs_rating[['gameid', 'date', 'red_team_id', 'red_jng_name',
+                           'red_jng_mu', 'red_jng_sigma']].copy()
+               .rename(columns={'red_team_id': 'teamid', 'red_jng_name': 'playerid',
+                                'red_jng_mu': 'trueskill_mu', 'red_jng_sigma': 'trueskill_sigma'}))
+    red_mid = (lcs_rating[['gameid', 'date', 'red_team_id', 'red_mid_name',
+                           'red_mid_mu', 'red_mid_sigma']].copy()
+               .rename(columns={'red_team_id': 'teamid', 'red_mid_name': 'playerid',
+                                'red_mid_mu': 'trueskill_mu', 'red_mid_sigma': 'trueskill_sigma'}))
+    red_bot = (lcs_rating[['gameid', 'date', 'red_team_id', 'red_bot_name',
+                           'red_bot_mu', 'red_bot_sigma']].copy()
+               .rename(columns={'red_team_id': 'teamid', 'red_bot_name': 'playerid',
+                                'red_bot_mu': 'trueskill_mu', 'red_bot_sigma': 'trueskill_sigma'}))
+    red_sup = (lcs_rating[['gameid', 'date', 'red_team_id', 'red_sup_name',
+                           'red_sup_mu', 'red_sup_sigma']].copy()
+               .rename(columns={'red_team_id': 'teamid', 'red_sup_name': 'playerid',
+                                'red_sup_mu': 'trueskill_mu', 'red_sup_sigma': 'trueskill_sigma'}))
 
-    for trueskill_values in blue_iterations.values():
-        cols_list = ['gameid', 'league', 'date', 'blue_team_result', 'blue_team', 'blue_team_id']
-        cols_list.extend(trueskill_values)
-        blue = lcs_rating[cols_list].copy()
-        blue = blue.rename(columns={'blue_team': 'teamname',
-                                    'blue_team_result': 'result',
-                                    trueskill_values[0]: 'playerid',
-                                    trueskill_values[1]: 'trueskill_mu',
-                                    trueskill_values[2]: 'trueskill_sigma'})
-        player_trueskill = pd.concat([player_trueskill, blue], ignore_index=True)
-
-    for trueskill_values in red_iterations.values():
-        cols_list = ['gameid', 'league', 'date', 'blue_team_result', 'red_team']
-        cols_list.extend(trueskill_values)
-        red = lcs_rating[cols_list].copy()
-        red['blue_team_result'] = 1 - red['blue_team_result']
-        red = red.rename(columns={'red_team': 'teamname',
-                                  'blue_team_result': 'result',
-                                  trueskill_values[0]: 'playerid',
-                                  trueskill_values[1]: 'trueskill_mu',
-                                  trueskill_values[2]: 'trueskill_sigma'})
-        player_trueskill = pd.concat([player_trueskill, red], ignore_index=True)
-
-    player_trueskill.sort_values(by=['date', 'league', 'gameid', 'result'], ascending=True, inplace=True)
-    player_trueskill = player_trueskill.astype({"gameid": "str"})
-
-    player_data = player_data.astype({"gameid": "str"})
+    # Concat
+    player_trueskill = pd.concat([blue_top, blue_jng, blue_mid, blue_bot, blue_sup,
+                                  red_top, red_jng, red_mid, red_bot, red_sup], axis=0)
+    player_trueskill.sort_values(by=['gameid', 'date', 'teamid'], ascending=True, inplace=True)
     player_data = (pd.merge(left=player_data, right=player_trueskill, how='left',
-                            left_on=['date', 'league', 'gameid', 'result', 'teamname', 'playerid'],
-                            right_on=['date', 'league', 'gameid', 'result', 'teamname', 'playerid'])
+                            left_on=['gameid', 'date', 'teamid', 'playerid'],
+                            right_on=['gameid', 'date', 'teamid', 'playerid'])
                    .reset_index(drop=True))
+
     player_data["opponent_mu"] = oe._get_opponent(player_data["trueskill_mu"].to_list(), "player")
     player_data["opponent_sigma"] = oe._get_opponent(player_data["trueskill_sigma"].to_list(), "player")
     player_data.sort_values(by=['date', 'league', 'gameid', 'teamname', 'position'], ascending=True, inplace=True)
 
-    return player_data, team_data
+    return player_data, team_data, player_ratings_dict
 
 
 def ewm_model(df: pd.DataFrame, entity: str) -> pd.DataFrame:
@@ -606,6 +615,7 @@ def ewm_model(df: pd.DataFrame, entity: str) -> pd.DataFrame:
     output : DataFrame
         A DataFrame containing the EWM model output for each team.
     """
+    # Split Data
     if entity == "team":
         identity = "teamid"
     elif entity == "player":
@@ -615,6 +625,7 @@ def ewm_model(df: pd.DataFrame, entity: str) -> pd.DataFrame:
         raise ValueError('Entity must be either PLAYER or TEAM.')
     df['result'] = df['result'].astype(float)
 
+    # Compute EMA Columns
     red_side = df[df['side'] == 'Red'].copy()
     red_side['red_side_ema_before'] = (red_side.groupby(identity)['result']
                                        .transform(lambda x: x.ewm(halflife=5, ignore_na=True).mean().shift().bfill()))
@@ -628,6 +639,7 @@ def ewm_model(df: pd.DataFrame, entity: str) -> pd.DataFrame:
                                         .transform(lambda x: x.ewm(halflife=5, ignore_na=True)
                                                    .mean()))
 
+    # Merge Data
     merged = pd.concat([blue_side, red_side], ignore_index=True)
     merged = merged.sort_values([identity, 'date']).reset_index(drop=True)
 
@@ -636,6 +648,24 @@ def ewm_model(df: pd.DataFrame, entity: str) -> pd.DataFrame:
                  .reset_index(drop=True))
     columns = ['blue_side_ema_before', 'blue_side_ema_after', 'red_side_ema_before', 'red_side_ema_after']
     win_rates[columns] = win_rates[columns].fillna(1)
+
+    #  Compute Opponent Columns
+    win_rates["opp_red_side_ema_before"] = oe._get_opponent(win_rates["red_side_ema_before"].to_list(), "team")
+    win_rates["opp_blue_side_ema_before"] = oe._get_opponent(win_rates["blue_side_ema_before"].to_list(), "team")
+
+    # Predict Win Probability By Side Win Rate
+    win_rates["side_ema_before"] = (np.where(win_rates['side'] == 'Blue',
+                                             win_rates["blue_side_ema_before"],
+                                             win_rates["red_side_ema_before"]))
+    win_rates["opp_side_ema_before"] = (np.where(win_rates['side'] == 'Blue',
+                                                 win_rates["opp_red_side_ema_before"],
+                                                 win_rates["opp_blue_side_ema_before"]))
+
+    win_rates["side_ema_win_perc"] = (win_rates["side_ema_before"] /
+                                      (win_rates["side_ema_before"] + win_rates["opp_side_ema_before"]))
+    win_rates["side_ema_win_perc"] = win_rates["side_ema_win_perc"].fillna(0.5)
+
+    # Final Sort
     win_rates.sort_values(by=['date', 'league', 'gameid', 'result'], ascending=True, inplace=True)
 
     return win_rates
@@ -659,21 +689,21 @@ def egpm_model(data: pd.DataFrame, entity: str) -> pd.DataFrame:
     # Data Setup
     if entity == 'team':
         identity = 'teamid'
-        mu = 'trueskill_sum_mu'
-        opp_mu = 'opponent_sum_mu'
+        elo = 'team_elo_before'
+        opp_elo = data['team_elo_before'] - data['team_elo_diff']
     elif entity == 'player':
         identity = 'playerid'
-        mu = 'trueskill_mu'
-        opp_mu = 'opponent_mu'
+        elo = 'player_elo_before'
+        opp_elo = data['player_elo_before'] - data['player_elo_diff']
     else:
         raise ValueError('Entity must be either PLAYER or TEAM.')
 
     data['egpm_dominance_ratio'] = (data['earned gpm'] /
-                                    (data[opp_mu] /
-                                     data[mu]))
+                                    (opp_elo /
+                                     data[elo]))
     data['opp_egpm_dominance_ratio'] = (data['opponent_egpm'] /
-                                        (data[mu] /
-                                         data[opp_mu]))
+                                        (data[elo] /
+                                         opp_elo))
     data['egpm_dominance_ema_before'] = (data.groupby([identity])
                                          ['egpm_dominance_ratio']
                                          .transform(lambda x: x.ewm(halflife=9, ignore_na=True)
@@ -739,7 +769,7 @@ def enrich_ema_statistics(oe_data: pd.DataFrame, entity: str):
         identity = 'teamid'
         columns = ['kills', 'deaths', 'assists', 'earned gpm', 'gamelength',
                    'firstblood', 'dragons', 'barons', 'towers',
-                   'goldat15', 'xpat15', 'csat15', 'golddiffat15', 'xpdiffat15', 'csdiffat15', 'dkpoints', 'kda',]
+                   'goldat15', 'xpat15', 'csat15', 'golddiffat15', 'xpdiffat15', 'csdiffat15', 'dkpoints', 'kda', ]
     elif entity == 'player':
         identity = 'playerid'
         columns = ['kills', 'deaths', 'assists', 'total cs', 'earned gpm', 'earnedgoldshare', 'gamelength',

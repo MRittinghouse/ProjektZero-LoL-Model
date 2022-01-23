@@ -57,8 +57,6 @@ class Team:
             roster = self._get_last_roster(player_data)
             self.team_exists = True
             self.team_elo = team_data.team_elo.mean()
-            self.team_trueskill_mu = team_data.trueskill_sum_mu.mean()
-            self.team_trueskill_sigma = team_data.trueskill_sum_sigma.mean()
         elif lower_name in ["first 5", "second 5"]:
             pass
         else:
@@ -80,23 +78,26 @@ class Team:
         players = [s.lower() for s in players]
 
         data = player_data[player_data.playername.str.lower().isin(players)]
+        data = data[data['date'] == data['date'].max()]
         if len(data) < 5:
             df_players = list(data.playername.str.lower().unique())
-            diff = np.setdiff1d(players, list(data.playername.str.lower().unique()))
+            diff = np.setdiff1d(players, df_players)
             for d in diff:
                 substitute = {'date': '1/1/2022 23:59', 'teamname': 'Null', 'position': 'Null',
                               'playername': d, 'player_elo': 1100, 'trueskill_mu': 21, 'trueskill_sigma': 8,
                               'egpm_dominance_ema_after': 198, 'blue_side_ema_after': 0.4, 'red_side_ema_after': 0.4}
                 data = data.append(substitute, ignore_index=True)
             self.warning += f"\n WARNING: {str(diff)} not found in database. Substitute values were used."
+        elif len(data) > 5:
+            raise ValueError('Team cannot have more than 5 player values.')
 
         self.player_elo = data.player_elo.mean()
         self.player_trueskill_mu = data.trueskill_mu.sum()
-        self.player_trueskill_sigma = data.trueskill_sigma.sum()
+        self.player_trueskill_sigma = data.trueskill_sigma.to_list()
         self.egpm_dominance = data.egpm_dominance_ema_after.sum()
         self.side_win_rate = data.blue_side_ema_after.mean() if self.side.lower() == "blue" \
             else data.red_side_ema_after.mean()
 
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):
-    print(Team(name="Golden Guardians", side="Red"))
+    print(Team("Team BDS", "Blue", "Adam", "Cinkrof", "NUCLEARINT", "xMatty", "Limit"))

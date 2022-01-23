@@ -16,6 +16,7 @@ from src.team import Team
 import nest_asyncio
 
 nest_asyncio.apply()
+pd.set_option("display.max_rows", None, "display.max_columns", None)
 
 # Variable Definitions
 load_dotenv()
