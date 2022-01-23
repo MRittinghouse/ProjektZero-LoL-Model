@@ -279,7 +279,8 @@ def aggregate_player_elos(player_data: pd.DataFrame, team_data: pd.DataFrame) ->
     return team_data
 
 
-def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.DataFrame:
+def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame, initial_sigma: float = 8.33,
+                    days_sigma_multiplier: float = 0, min_sigma: float = 1, sigma_negative_bonus_per_match = 0) -> pd.DataFrame:
     r"""
     Calculate team ranking using Microsoft's TrueSkill 1 algorithm.
     Reference: https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/
@@ -318,7 +319,7 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
     player_ratings_dict = dict()
     last_match_date_dict = dict()
     for i in input_data['playerid'].unique():
-        player_ratings_dict[i] = ts.create_rating()
+        player_ratings_dict[i] = ts.create_rating(sigma=initial_sigma)
         last_match_date_dict[i] = None
 
     def setup_match(df: pd.DataFrame) -> np.array:
@@ -461,13 +462,18 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
         blue_names = [blue_top_name, blue_jng_name, blue_mid_name, blue_bot_name, blue_sup_name]
         red_names = [red_top_name, red_jng_name, red_mid_name, red_bot_name, red_sup_name]
         teams = [blue_names, red_names]
+
         for team_index, team in enumerate(teams):
             for player_index, player in enumerate(team):
                 rating_dict[player] = rated_rating_groups[team_index][player_index]
                 if last_match_dict[player] is not None:
                     days_difference = (date - last_match_dict[player]).days
-                    new_sigma = min(8.33,rating_dict[player] .sigma + 0.02* days_difference)
-                    rating_dict[player] =  trueskill.TrueSkill(draw_probability=0.0, sigma=new_sigma, mu =rated_rating_groups[team_index][player_index].mu )
+                    new_sigma = min(initial_sigma, rating_dict[player].sigma + days_sigma_multiplier * days_difference)
+                    new_sigma -= sigma_negative_bonus_per_match
+                    if new_sigma < min_sigma:
+                        new_sigma = 1
+                    rating_dict[player] = trueskill.TrueSkill(draw_probability=0.0, sigma=new_sigma,
+                                                              mu=rated_rating_groups[team_index][player_index].mu)
 
                 last_match_dict[player] = date
 
@@ -518,7 +524,6 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
                                 'blue_sigma_squared': 'trueskill_sigma_squared',
                                 'blue_team_win_prob': 'trueskill_win_perc'})
 
-    lcs_rating[lcs_rating['blue_bot_name'] == 'oe:player:3a3cf889f1996110ab52915425d60b5']
     red = lcs_rating[['gameid', 'date', 'red_team', 'red_team_id']].copy()
     red['red_team_win_prob'] = 1 - lcs_rating['blue_team_win_prob']
     red['red_sum_mu'] = lcs_rating[red_mu].sum(axis=1)
