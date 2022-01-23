@@ -38,6 +38,15 @@ def predict_match(blue: Team, red: Team) -> pd.DataFrame:
 
     weights = generate_validation_metrics(graph=False)
 
+    def scale_egpm(win_perc: float) -> float:
+        min_tune = 0.125
+        max_tune = 0.875
+        team_min = 0.261964
+        team_max = 0.695982
+        base_std = (win_perc - team_min) / (team_max - team_min)
+        scaled_win_perc = base_std * (max_tune - min_tune) + min_tune
+        return scaled_win_perc
+
     match = pd.DataFrame({"blue": [blue.name],
                           "red": [red.name],
                           "player_elo": [elo_prediction(blue.player_elo, red.player_elo)],
@@ -45,7 +54,7 @@ def predict_match(blue: Team, red: Team) -> pd.DataFrame:
                                                                     blue.player_trueskill_sigma,
                                                                     red.player_trueskill_mu,
                                                                     red.player_trueskill_sigma)],
-                          "egpm_dom": [standard_prediction(blue.egpm_dominance, red.egpm_dominance)],
+                          "egpm_dom": [scale_egpm(standard_prediction(blue.egpm_dominance, red.egpm_dominance))],
                           "side_win": [standard_prediction(blue.side_win_rate, red.side_win_rate)]})
 
     if blue.team_exists and red.team_exists:
@@ -259,13 +268,9 @@ def mock_draft(blue1: str, blue2: str, blue3: str, blue4: str, blue5: str,
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):
     blue_team = Team("Team BDS", "Blue", "Adam", "Cinkrof", "NUCLEARINT", "xMatty", "Limit")
-    print(blue_team.player_trueskill_mu)
-    print(blue_team.player_trueskill_sigma)
     red_team = Team("Rogue", "Red", "Odoamne", "Malrang", "Larssen", "Comp", "Trymbi")
-    print(red_team.player_trueskill_mu)
-    print(red_team.player_trueskill_sigma)
+
     print(predict_draft("Team BDS", "Adam", "Cinkrof", "NUCLEARINT", "xMatty", "LIMIT",
                         "Rogue", "Odoamne", "Malrang", "Larssen", "Comp", "Trymbi"))
-
     print(predict_draft("Rogue", "Odoamne", "Malrang", "Larssen", "Comp", "Trymbi",
                         "Team BDS", "Adam", "Cinkrof", "NUCLEARINT", "xMatty", "LIMIT"))

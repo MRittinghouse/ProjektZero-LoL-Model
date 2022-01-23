@@ -16,8 +16,6 @@ import datetime as dt
 from pathlib import Path
 import pandas as pd
 from typing import Tuple
-from sklearn.calibration import CalibratedClassifierCV
-from sklearn.naive_bayes import GaussianNB
 import src.lol_modeling as lol
 import src.oracles_elixir as oe
 

@@ -218,13 +218,12 @@ def validate_egpm_dominance(teams: pd.DataFrame, directory: Path, graph: bool):
         Variable describing the log loss, as defined by sklearn.metrics, of the model.
     """
     # Data Preparation
-    teams['egpm_dominance_win_perc'] = teams['egpm_dominance_win_perc'].fillna(0.5)
-    teams['egpm_dominance_expected_result'] = np.where(teams['egpm_dominance_win_perc'] >= 0.5, 1, 0)
+    teams['egpm_dominance_expected_result'] = np.where(teams['scaled_egpm_win_perc'] >= 0.5, 1, 0)
     teams['result'] = teams.result.astype('int32')
 
     # Label Accuracy and Log Loss
     correct = len(teams[teams['egpm_dominance_expected_result'] == teams['result']]) / len(teams)
-    logloss = log_loss(teams['result'], teams['egpm_dominance_win_perc'], labels=[0, 1])
+    logloss = log_loss(teams['result'], teams['scaled_egpm_win_perc'], labels=[0, 1])
 
     # Generate Graph
     if graph:
@@ -350,10 +349,11 @@ def validate_ensemble_accuracy(teams: pd.DataFrame,
     """
     # Data Preparation
     teams['result'] = teams.result.astype('int32')
-    sum_accuracy = team_accuracy + player_accuracy + egpm_dom_accuracy + side_ema_accuracy  # + trueskill_accuracy
+    sum_accuracy = team_accuracy + player_accuracy + egpm_dom_accuracy + side_ema_accuracy + trueskill_accuracy
     teams['ensemble_win_perc'] = ((teams['team_elo_win_perc'] * (team_accuracy / sum_accuracy)) +
                                   (teams['player_elo_win_perc'] * (player_accuracy / sum_accuracy)) +
-                                  (teams['egpm_dominance_win_perc'] * (egpm_dom_accuracy / sum_accuracy)) +
+                                  (teams['trueskill_win_perc'] * (trueskill_accuracy / sum_accuracy)) +
+                                  (teams['scaled_egpm_win_perc'] * (egpm_dom_accuracy / sum_accuracy)) +
                                   (teams['side_ema_win_perc'] * (side_ema_accuracy / sum_accuracy)))
     teams['opp_ensemble_win_perc'] = 1 - teams['ensemble_win_perc']
     teams['ensemble_expected_result'] = np.where(teams['ensemble_win_perc'] >= 0.5, 1, 0)
@@ -447,3 +447,4 @@ def main():
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):
     main()
+    print("Validation complete.")

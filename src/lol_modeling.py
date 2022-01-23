@@ -18,30 +18,29 @@ Nothing in this code or its outputs constitutes financial advice.
 This code is intended to be imported into your analytics projects.
 """
 # Housekeeping
-import csv
 import itertools
 import math
 import numpy as np
+from pandas import DataFrame
 import src.oracles_elixir as oe
 import pandas as pd
-from scipy.stats import norm
 import trueskill
-from typing import Optional
+from typing import Optional, Tuple, Dict, Any
 
 
 # Function Library
-def std(x: int) -> int:
+def std(x: int) -> np.ndarray:
     """
     Calculate the standard deviation of X using Numpy."""
     return np.std(x)
 
 
-def q10(x: pd.Series) -> pd.Series:
+def q10(x: pd.Series) -> np.ndarray:
     """Calculate the 10th percentile of a Numpy series."""
     return np.percentile(x, q=10)
 
 
-def q90(x: pd.Series) -> pd.Series:
+def q90(x: pd.Series) -> np.ndarray:
     """Calculate the 90th percentile of a Numpy series."""
     return np.percentile(x, q=90)
 
@@ -75,10 +74,10 @@ def elo_calculator(df: pd.DataFrame, entity: str,
     elo_loser_before = []
 
     # Function Definitions
-    def get_elo(team: str) -> dict:
+    def get_elo(team: str) -> float:
         return elo_results.get(team, start_elo)
 
-    def expected_result(elo_a: int, elo_b: int) -> int:
+    def expected_result(elo_a: float, elo_b: float) -> float:
         expect_a = 1.0 / (1 + 10 ** ((elo_b - elo_a) / 400))
         return expect_a
 
@@ -246,7 +245,6 @@ def player_elo(df: pd.DataFrame, start: int = 1200, k: int = 28) -> pd.DataFrame
 
     return df
 
-
 def aggregate_player_elos(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.DataFrame:
     """
     Aggregate individual player elos to a mean elo per team per match.
@@ -280,7 +278,8 @@ def aggregate_player_elos(player_data: pd.DataFrame, team_data: pd.DataFrame) ->
     return team_data
 
 
-def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.DataFrame:
+def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> Tuple[
+    Optional[DataFrame], Optional[DataFrame], Dict[Any, Any]]:
     r"""
     Calculate team ranking using Microsoft's TrueSkill 1 algorithm.
     Reference: https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/
@@ -367,18 +366,18 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
 
         return output_array
 
-    colnames = ['gameid', 'date', 'league', 'ckpm', 'blue_earned_gpm',
+    col_names = ['gameid', 'date', 'league', 'ckpm', 'blue_earned_gpm',
                 'blue_kpm', 'blue_team', 'blue_team_id', 'blue_top_name', 'blue_jng_name',
                 'blue_mid_name', 'blue_bot_name', 'blue_sup_name',
                 'blue_team_result', 'red_team', 'red_team_id', 'red_earned_gpm', 'red_kpm',
                 'red_top_name', 'red_jng_name', 'red_mid_name',
                 'red_bot_name', 'red_sup_name']
 
-    lcs_rating = pd.DataFrame(setup_match(input_data), columns=colnames)
+    lcs_rating = pd.DataFrame(setup_match(input_data), columns=col_names)
 
     analyzed_gameids = {}
 
-    def win_probability(team1: str, team2: str, trueskill_global_env):
+    def win_probability(team1: dict, team2: dict, trueskill_global_env) -> float:
         """
         Compute the TrueSkill probability of a team to win based on mu and sigma values.
         """
@@ -722,7 +721,15 @@ def egpm_model(data: pd.DataFrame, entity: str) -> pd.DataFrame:
     data['egpm_dominance_win_perc'] = (data['egpm_dominance_ema_before'] /
                                        (data['egpm_dominance_ema_before'] +
                                         data['opp_egpm_dominance_ema_before']))
+    data['egpm_dominance_win_perc'] = data['egpm_dominance_win_perc'].fillna(0.5)
     data['egpm_dominance_diff'] = data['egpm_dominance_ema_before'] - data['opp_egpm_dominance_ema_before']
+
+    # Scale Win Perc (derived from sklearn MinMaxScaler)
+    min_tune = 0.125
+    max_tune = 0.875
+    base = data['egpm_dominance_win_perc']
+    base_std = (base - base.min(axis=0)) / (base.max(axis=0) - base.min(axis=0))
+    data['scaled_egpm_win_perc'] = base_std * (max_tune - min_tune) + min_tune
 
     return data
 
