@@ -55,7 +55,7 @@ def enrich_dataset(player_data: pd.DataFrame,
     team_data = lol.aggregate_player_elos(player_data, team_data)
 
     # Enrich Team TrueSkill
-    #player_data, team_data, ts_lookup = lol.trueskill_model(player_data, team_data)
+    player_data, team_data, ts_lookup = lol.trueskill_model(player_data, team_data)
 
     # EGPM Model - TrueSkill Normalized Earned Gold
     team_data = lol.egpm_model(team_data, "team")

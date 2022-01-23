@@ -592,8 +592,8 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
                             right_on=['gameid', 'date', 'teamid', 'playerid'])
                    .reset_index(drop=True))
 
-    player_data["opponent_mu"] = oe._get_opponent(player_data["trueskill_mu"].to_list(), "player")
-    player_data["opponent_sigma"] = oe._get_opponent(player_data["trueskill_sigma"].to_list(), "player")
+    player_data["opponent_mu"] = oe.get_opponent(player_data["trueskill_mu"].to_list(), "player")
+    player_data["opponent_sigma"] = oe.get_opponent(player_data["trueskill_sigma"].to_list(), "player")
     player_data.sort_values(by=['date', 'league', 'gameid', 'teamname', 'position'], ascending=True, inplace=True)
 
     return player_data, team_data, player_ratings_dict
@@ -650,8 +650,8 @@ def ewm_model(df: pd.DataFrame, entity: str) -> pd.DataFrame:
     win_rates[columns] = win_rates[columns].fillna(1)
 
     #  Compute Opponent Columns
-    win_rates["opp_red_side_ema_before"] = oe._get_opponent(win_rates["red_side_ema_before"].to_list(), "team")
-    win_rates["opp_blue_side_ema_before"] = oe._get_opponent(win_rates["blue_side_ema_before"].to_list(), "team")
+    win_rates["opp_red_side_ema_before"] = oe.get_opponent(win_rates["red_side_ema_before"].to_list(), "team")
+    win_rates["opp_blue_side_ema_before"] = oe.get_opponent(win_rates["blue_side_ema_before"].to_list(), "team")
 
     # Predict Win Probability By Side Win Rate
     win_rates["side_ema_before"] = (np.where(win_rates['side'] == 'Blue',

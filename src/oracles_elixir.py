@@ -20,7 +20,7 @@ from typing import Optional, Union
 
 
 # Utility/Helper Function Definitions
-def _get_opponent(column: pd.Series, entity: str) -> list:
+def get_opponent(column: pd.Series, entity: str) -> list:
     """
     Generate value for the opposing team or player.
     This can be used for utilities such as returning the opposing player or team's name.
@@ -213,6 +213,11 @@ def clean_data(oe_data: pd.DataFrame,
     drop_games = drop_games["gameid"].unique()
     oe_data = (oe_data[~oe_data.gameid.isin(drop_games)].copy().reset_index(drop=True))
 
+    # Drop Games With Negative Earned GPM
+    drop_games = oe_data[oe_data["earned gpm"] < 0].copy()
+    drop_games = drop_games["gameid"].unique()
+    oe_data = (oe_data[~oe_data.gameid.isin(drop_games)].copy().reset_index(drop=True))
+
     # Normalize Player/Team Names
     if team_replacements:
         oe_data['teamname'] = oe_data['teamname'].replace(team_replacements)
@@ -271,12 +276,12 @@ def clean_data(oe_data: pd.DataFrame,
     # Enrich Opponent-Based Metrics
     if split_on == "player":
         oe_data["playerid"] = oe_data["playerid"].fillna(oe_data["playername"])
-        oe_data["opponentteam"] = _get_opponent(oe_data.teamname.to_list(), split_on)
-        oe_data["opponentteamid"] = _get_opponent(oe_data.teamid.to_list(), split_on)
+        oe_data["opponentteam"] = get_opponent(oe_data.teamname.to_list(), split_on)
+        oe_data["opponentteamid"] = get_opponent(oe_data.teamid.to_list(), split_on)
 
-    oe_data["opponentname"] = _get_opponent(oe_data[split_name].to_list(), split_on)
-    oe_data["opponentid"] = _get_opponent(oe_data[split_id].to_list(), split_on)
-    oe_data["opponent_egpm"] = _get_opponent(oe_data["earned gpm"].to_list(), split_on)
+    oe_data["opponentname"] = get_opponent(oe_data[split_name].to_list(), split_on)
+    oe_data["opponentid"] = get_opponent(oe_data[split_id].to_list(), split_on)
+    oe_data["opponent_egpm"] = get_opponent(oe_data["earned gpm"].to_list(), split_on)
 
     # Return Output
     return oe_data
