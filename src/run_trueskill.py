@@ -21,3 +21,4 @@ data = data[~data.gameid.isin(invalid_games)].copy()
 teams = oe.clean_data(data, split_on='team')
 players = oe.clean_data(data, split_on='player')
 player_data, team_data, last_match_dict, ts_lookup = lol.trueskill_model(players, teams)
+q = player_data[player_data['playerid'] == 'oe:player:3a3cf889f1996110ab52915425d60b5']

@@ -243,7 +243,6 @@ def player_elo(df: pd.DataFrame, start: int = 1200, k: int = 28) -> pd.DataFrame
                          right_on=['gameid', 'league', 'position', 'date', 'teamid', 'playerid'])
           .reset_index(drop=True))
     df.sort_values(by=['date', 'league', 'gameid', 'result', 'position'], ascending=True, inplace=True)
-    df[df['playerid'] == 'oe:player:3a3cf889f1996110ab52915425d60b5']
     return df
 
 
