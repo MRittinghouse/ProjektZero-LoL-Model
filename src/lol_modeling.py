@@ -243,7 +243,7 @@ def player_elo(df: pd.DataFrame, start: int = 1200, k: int = 28) -> pd.DataFrame
                          right_on=['gameid', 'league', 'position', 'date', 'teamid', 'playerid'])
           .reset_index(drop=True))
     df.sort_values(by=['date', 'league', 'gameid', 'result', 'position'], ascending=True, inplace=True)
-
+    df[df['playerid'] == 'oe:player:3a3cf889f1996110ab52915425d60b5']
     return df
 
 
@@ -317,14 +317,16 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
     # Initialize TrueSkill Player Ratings Dictionary
     ts = trueskill.TrueSkill(draw_probability=0.0)
     player_ratings_dict = dict()
+    last_match_date_dict = dict()
     for i in input_data['playerid'].unique():
         player_ratings_dict[i] = ts.create_rating()
+        last_match_date_dict[i] = None
 
     def setup_match(df: pd.DataFrame) -> np.array:
         # Prepare DataFrame
         df = df.sort_values(['date', 'gameid', 'side', 'position']).reset_index()
         df = df[['playerid', 'playername', 'date', 'result', 'teamname',
-                 'league', 'ckpm', 'gameid', 'team_egpm', 'team_kpm', 'teamid']].copy().values
+                 'league', 'ckpm', 'gameid', 'team_egpm', 'team_kpm', 'teamid', 'date']].copy().values
 
         # Define Initial Variables
         matches_count = int(len(df) / 10)
@@ -389,7 +391,7 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
 
         return trueskill_global_env.cdf(delta_mu / denominator)
 
-    def update_trueskill(rating_dict, gameid_dict, gameid, blue_team_result,
+    def update_trueskill(rating_dict, last_match_dict, gameid_dict, gameid, date, blue_team_result,
                          blue_top_name, blue_jng_name, blue_mid_name,
                          blue_bot_name, blue_sup_name, red_top_name,
                          red_jng_name, red_mid_name, red_bot_name,
@@ -407,6 +409,7 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
                           rating_dict[red_mid_name],
                           rating_dict[red_bot_name],
                           rating_dict[red_sup_name])]
+
         blue_mu = rating_groups[0][0].mu
         blue_sigma = rating_groups[0][0].sigma
         red_mu = rating_groups[1][0].mu
@@ -456,16 +459,18 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
                                red_bot_sigma, red_sup_mu, red_sup_sigma])
 
         # Update the rating dictionary
-        rating_dict[blue_top_name] = rated_rating_groups[0][0]
-        rating_dict[blue_jng_name] = rated_rating_groups[0][1]
-        rating_dict[blue_mid_name] = rated_rating_groups[0][2]
-        rating_dict[blue_bot_name] = rated_rating_groups[0][3]
-        rating_dict[blue_sup_name] = rated_rating_groups[0][4]
-        rating_dict[red_top_name] = rated_rating_groups[1][0]
-        rating_dict[red_jng_name] = rated_rating_groups[1][1]
-        rating_dict[red_mid_name] = rated_rating_groups[1][2]
-        rating_dict[red_bot_name] = rated_rating_groups[1][3]
-        rating_dict[red_sup_name] = rated_rating_groups[1][4]
+        blue_names = [blue_top_name, blue_jng_name, blue_mid_name, blue_bot_name, blue_sup_name]
+        red_names = [red_top_name, red_jng_name, red_mid_name, red_bot_name, red_sup_name]
+        teams = [blue_names, red_names]
+        for team_index, team in enumerate(teams):
+            for player_index, player in enumerate(team):
+                rating_dict[player] = rated_rating_groups[team_index][player_index]
+                if last_match_dict[player] is not None:
+                    days_difference = (date - last_match_dict[player]).days
+                    new_sigma = min(8.33,rating_dict[player] .sigma + 0.02* days_difference)
+                    rating_dict[player] =  trueskill.TrueSkill(draw_probability=0.0, sigma=new_sigma, mu =rated_rating_groups[team_index][player_index].mu )
+
+                last_match_dict[player] = date
 
         # Conditional handling to prevent gameIDs from duplicative updating TS ratings
         if gameid in gameid_dict:
@@ -483,7 +488,7 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
                 'red_bot_mu', 'red_bot_sigma', 'red_sup_mu',
                 'red_sup_sigma']] = lcs_rating.apply(
         lambda row: update_trueskill(
-            player_ratings_dict, analyzed_gameids, row['gameid'],
+            player_ratings_dict, last_match_date_dict, analyzed_gameids, row['gameid'], row['date'],
             row['blue_team_result'], row['blue_top_name'],
             row['blue_jng_name'], row['blue_mid_name'],
             row['blue_bot_name'], row['blue_sup_name'],
@@ -514,6 +519,7 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
                                 'blue_sigma_squared': 'trueskill_sigma_squared',
                                 'blue_team_win_prob': 'trueskill_win_perc'})
 
+    lcs_rating[lcs_rating['blue_bot_name'] == 'oe:player:3a3cf889f1996110ab52915425d60b5']
     red = lcs_rating[['gameid', 'date', 'red_team', 'red_team_id']].copy()
     red['red_team_win_prob'] = 1 - lcs_rating['blue_team_win_prob']
     red['red_sum_mu'] = lcs_rating[red_mu].sum(axis=1)
@@ -596,7 +602,7 @@ def trueskill_model(player_data: pd.DataFrame, team_data: pd.DataFrame) -> pd.Da
     player_data["opponent_sigma"] = oe.get_opponent(player_data["trueskill_sigma"].to_list(), "player")
     player_data.sort_values(by=['date', 'league', 'gameid', 'teamname', 'position'], ascending=True, inplace=True)
 
-    return player_data, team_data, player_ratings_dict
+    return player_data, team_data, player_ratings_dict, last_match_date_dict
 
 
 def ewm_model(df: pd.DataFrame, entity: str) -> pd.DataFrame:
