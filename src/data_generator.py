@@ -124,7 +124,8 @@ def main():
     # Remove Buggy Matches (both red/blue team listed as same team, invalid for elo/TrueSkill)
     invalid_games = ['NA1/3754345055', 'NA1/3754344502',
                      'ESPORTSTMNT02/1890835', 'NA1/3669212337',
-                     'NA1/3669211958', 'ESPORTSTMNT02/1890848']
+                     'NA1/3669211958', 'ESPORTSTMNT02/1890848',
+                     'ESPORTSTMNT02_1932895', 'ESPORTSTMNT02_1932914']
     data = data[~data.gameid.isin(invalid_games)].copy()
 
     # Clean/Format Data
