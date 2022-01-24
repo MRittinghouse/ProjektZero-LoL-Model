@@ -52,6 +52,9 @@ def validate_team_elo(teams: pd.DataFrame, directory: Path, graph: bool):
     # Data Preparation
     teams['opp_team_elo'] = teams['team_elo_before'] - teams['team_elo_diff']
     teams['team_elo_expected_result'] = np.where(teams['team_elo_win_perc'] >= 0.5, 1, 0)
+    teams['team_elo_expected_result'] = np.where((teams['team_elo_win_perc'] == 0.5) &
+                                                 (teams['side'] == 'Red'), 0,
+                                                 teams['team_elo_expected_result'])
     teams['result'] = teams.result.astype('int32')
 
     # Label Accuracy and Log Loss
@@ -108,6 +111,9 @@ def validate_player_elo(teams: pd.DataFrame, directory: Path, graph: bool):
     # Data Preparation
     teams['opp_player_elo'] = teams['player_elo_before'] - teams['player_elo_diff']
     teams['player_elo_expected_result'] = np.where(teams['player_elo_win_perc'] >= 0.5, 1, 0)
+    teams['player_elo_expected_result'] = np.where((teams['player_elo_win_perc'] == 0.5) &
+                                                   (teams['side'] == 'Red'), 0,
+                                                   teams['player_elo_expected_result'])
     teams['result'] = teams.result.astype('int32')
 
     # Label Accuracy and Log Loss
@@ -163,6 +169,9 @@ def validate_trueskill(teams: pd.DataFrame, directory: Path, graph: bool):
     """
     # Data Preparation
     teams['trueskill_expected_result'] = np.where(teams['trueskill_win_perc'] >= 0.5, 1, 0)
+    teams['trueskill_expected_result'] = np.where((teams['trueskill_win_perc'] == 0.5) &
+                                                  (teams['side'] == 'Red'), 0,
+                                                  teams['trueskill_expected_result'])
     teams['result'] = teams.result.astype('int32')
 
     # Label Accuracy and Log Loss
@@ -219,6 +228,9 @@ def validate_egpm_dominance(teams: pd.DataFrame, directory: Path, graph: bool):
     """
     # Data Preparation
     teams['egpm_dominance_expected_result'] = np.where(teams['egpm_dominance_win_perc'] >= 0.5, 1, 0)
+    teams['egpm_dominance_expected_result'] = np.where((teams['egpm_dominance_win_perc'] == 0.5) &
+                                                       (teams['side'] == 'Red'), 0,
+                                                       teams['egpm_dominance_expected_result'])
     teams['result'] = teams.result.astype('int32')
 
     # Label Accuracy and Log Loss
@@ -275,6 +287,9 @@ def validate_side_ema(teams: pd.DataFrame, directory: Path, graph: bool):
     """
     # Data Preparation
     teams['side_ema_expected_result'] = np.where(teams['side_ema_win_perc'] >= 0.5, 1, 0)
+    teams['side_ema_expected_result'] = np.where((teams['side_ema_win_perc'] == 0.5) &
+                                                 (teams['side'] == 'Red'), 0,
+                                                 teams['side_ema_expected_result'])
     teams['result'] = teams.result.astype('int32')
 
     # Label Accuracy and Log Loss
@@ -357,6 +372,9 @@ def validate_ensemble_accuracy(teams: pd.DataFrame,
                                   (teams['side_ema_win_perc'] * (side_ema_accuracy / sum_accuracy)))
     teams['opp_ensemble_win_perc'] = 1 - teams['ensemble_win_perc']
     teams['ensemble_expected_result'] = np.where(teams['ensemble_win_perc'] >= 0.5, 1, 0)
+    teams['ensemble_expected_result'] = np.where((teams['ensemble_win_perc'] == 0.5) &
+                                                 (teams['side'] == 'Red'), 0,
+                                                 teams['ensemble_expected_result'])
 
     # Label Accuracy and Log Loss
     correct = len(teams[teams['ensemble_expected_result'] == teams['result']]) / len(teams)
