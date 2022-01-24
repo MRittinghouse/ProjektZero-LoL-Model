@@ -765,7 +765,8 @@ def dk_enrich(oe_data: pd.DataFrame, entity: str):
 
 
 def enrich_ema_statistics(oe_data: pd.DataFrame, entity: str):
-    oe_data["kda"] = (oe_data["kills"] + oe_data["assists"]) / oe_data["deaths"]
+    deathval = np.where(oe_data["deaths"] == 0, 1, oe_data["deaths"])
+    oe_data["kda"] = (oe_data["kills"] + oe_data["assists"]) / deathval
     if entity == 'team':
         identity = 'teamid'
         columns = ['kills', 'deaths', 'assists', 'earned gpm', 'gamelength',

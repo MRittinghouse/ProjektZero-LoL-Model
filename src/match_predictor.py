@@ -56,21 +56,22 @@ def predict_match(blue: Team, red: Team) -> pd.DataFrame:
         sum_accuracy = (weights["team_accuracy"] + weights["player_accuracy"] + weights["trueskill_accuracy"] +
                         weights["egpm_dom_accuracy"] + weights["side_ema_accuracy"])
 
-        match["blue_win_chance"] = ((match["team_elo"] * (weights["team_accuracy"]/sum_accuracy)) +
-                                    (match["player_elo"] * (weights["player_accuracy"]/sum_accuracy)) +
+        match["blue_win_chance"] = ((match["team_elo"] * (weights["team_accuracy"] / sum_accuracy)) +
+                                    (match["player_elo"] * (weights["player_accuracy"] / sum_accuracy)) +
                                     (match["player_trueskill"] * (weights["trueskill_accuracy"] / sum_accuracy)) +
-                                    (match["team_egpm_dom"] * (weights["egpm_dom_accuracy"]/sum_accuracy)) +
-                                    (match["side_win"] * (weights["side_ema_accuracy"]/sum_accuracy)))
+                                    (match["team_egpm_dom"] * (weights["egpm_dom_accuracy"] / sum_accuracy)) +
+                                    (match["side_win"] * (weights["side_ema_accuracy"] / sum_accuracy)))
 
-        match["deviation"] = match[["team_elo", "player_elo", "player_trueskill", "team_egpm_dom", "side_win"]].std(axis=1)
+        match["deviation"] = match[["team_elo", "player_elo", "player_trueskill", "team_egpm_dom", "side_win"]].std(
+            axis=1)
         match.drop(['player_egpm_dom'], axis=1, inplace=True)
     else:
         sum_accuracy = (weights["player_accuracy"] + weights["trueskill_accuracy"] +
                         weights["egpm_dom_accuracy"] + weights["side_ema_accuracy"])
-        match["blue_win_chance"] = ((match["player_elo"] * (weights["player_accuracy"]/sum_accuracy)) +
-                                    (match["player_trueskill"] * (weights["trueskill_accuracy"]/sum_accuracy)) +
-                                    (match["player_egpm_dom"] * (weights["egpm_dom_accuracy"]/sum_accuracy)) +
-                                    (match["side_win"] * (weights["side_ema_accuracy"]/sum_accuracy)))
+        match["blue_win_chance"] = ((match["player_elo"] * (weights["player_accuracy"] / sum_accuracy)) +
+                                    (match["player_trueskill"] * (weights["trueskill_accuracy"] / sum_accuracy)) +
+                                    (match["player_egpm_dom"] * (weights["egpm_dom_accuracy"] / sum_accuracy)) +
+                                    (match["side_win"] * (weights["side_ema_accuracy"] / sum_accuracy)))
         match["deviation"] = match[["player_elo", "player_trueskill", "player_egpm_dom", "side_win"]].std(axis=1)
 
     return match
@@ -114,14 +115,12 @@ def best_of_three(t1name, t1odds, t2name, t2odds):
     doublecheck = t1_20 + t1_21 + t2_20 + t2_21
     assert round(doublecheck, 5) == 1.0
 
-    output = f'''
-Overall Likelihood Of {t1name} To Win Series: {((t1_20 + t1_21) * 100):.2f}%
-    Probability {t1name} wins 2/0: {(t1_20*100):.2f}%
-    Probability {t1name} wins 2/1: {(t1_21*100):.2f}%
-
-Overall Likelihood Of {t2name} To Win Series: {((t2_20 + t2_21) * 100):.2f}%
-    Probability {t2name} wins 2/0: {(t2_20*100):.2f}%
-    Probability {t2name} wins 2/1: {(t2_21*100):.2f}%'''
+    output = f"```Overall Likelihood Of {t1name} To Win Series: {((t1_20 + t1_21) * 100):.2f}% \n" \
+             f"Probability {t1name} wins 2/0: {(t1_20 * 100):.2f}% \n" \
+             f"Probability {t1name} wins 2/1: {(t1_21 * 100):.2f}% \n \n" \
+             f"Overall Likelihood Of {t2name} To Win Series: {((t2_20 + t2_21) * 100):.2f}% \n" \
+             f"Probability {t2name} wins 2/0: {(t2_20 * 100):.2f}% \n" \
+             f"Probability {t2name} wins 2/1: {(t2_21 * 100):.2f}%```"
     return output
 
 
@@ -185,23 +184,20 @@ def best_of_five(t1name, t1odds, t2name, t2odds):
     t1likelihood = ((t1_30 + t1_31 + t1_32) * 100)
     t2likelihood = ((t2_30 + t2_31 + t2_32) * 100)
 
-    output = f'''
-Overall Likelihood Of {t1name} To Win Series: {t1likelihood:.2f}%
-    Probability {t1name} wins 3/0: {(t1_30*100):.2f}%
-    Probability {t1name} wins 3/1: {(t1_31*100):.2f}%
-    Probability {t1name} wins 3/2: {(t1_32*100):.2f}%
-
-Overall Likelihood Of {t2name} To Win Series: {t2likelihood:.2f}%
-    Probability {t2name} wins 3/0: {(t2_30*100):.2f}%
-    Probability {t2name} wins 3/1: {(t2_31*100):.2f}%
-    Probability {t2name} wins 3/2: {(t2_32*100):.2f}%'''
+    output = f"```Overall Likelihood Of {t1name} To Win Series: {t1likelihood:.2f}% \n" \
+             f"Probability {t1name} wins 3/0: {(t1_30 * 100):.2f}% \n" \
+             f"Probability {t1name} wins 3/1: {(t1_31 * 100):.2f}% \n" \
+             f"Probability {t1name} wins 3/2: {(t1_32 * 100):.2f}% \n \n" \
+             f"Overall Likelihood Of {t2name} To Win Series: {t2likelihood:.2f}% \n" \
+             f"Probability {t2name} wins 3/0: {(t2_30 * 100):.2f}% \n" \
+             f"Probability {t2name} wins 3/1: {(t2_31 * 100):.2f}% \n" \
+             f"Probability {t2name} wins 3/2: {(t2_32 * 100):.2f}%```"
     return output
 
 
 def predict(blue_team: str, blue1: str, blue2: str, blue3: str, blue4: str, blue5: str,
             red_team: str, red1: str, red2: str, red3: str, red4: str, red5: str,
-            verbose: bool):
-
+            verbose: bool = False):
     output = pd.DataFrame()
 
     blue = Team(name=blue_team, side="Blue", top=blue1, jng=blue2, mid=blue3, bot=blue4, sup=blue5)
@@ -210,8 +206,12 @@ def predict(blue_team: str, blue1: str, blue2: str, blue3: str, blue4: str, blue
     match = predict_match(blue, red)
     output = pd.concat([output, match], ignore_index=True)
 
-    if not verbose:
+    if verbose:
+        output = output[["blue", "red", "blue_win_chance", "deviation",
+                         "team_elo", "player_elo", "player_trueskill", "team_egpm_dom", "side_win"]]
+    else:
         output = output[["blue", "red", "blue_win_chance", "deviation"]]
+
 
     output = "```ProjektZero Model Predictions: \n \n" \
              f"{output.copy().to_markdown()}"
@@ -233,7 +233,6 @@ def predict(blue_team: str, blue1: str, blue2: str, blue3: str, blue4: str, blue
 
 def mock_draft(blue1: str, blue2: str, blue3: str, blue4: str, blue5: str,
                red1: str, red2: str, red3: str, red4: str, red5: str):
-
     output = pd.DataFrame()
 
     blue = Team(name="First 5", side="Blue", top=blue1, jng=blue2, mid=blue3, bot=blue4, sup=blue5)

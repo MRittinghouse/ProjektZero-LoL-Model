@@ -62,7 +62,7 @@ async def profile(ctx, entity):
                      f"`Position: {data['position']} \n" \
                      f"Elo: {data['player_elo']:.2f} \n" \
                      f"TrueSkill Mu: {data['trueskill_mu']:.2f} \n" \
-                     f"EGPM Dominance: {data['egpm_dominance_ema_after']:.2f} \n" \
+                     f"EGPM Dominance: {data['egpm_dominance']:.2f} \n" \
                      f"K/D/A Ratio: {data['kda']:.2f} \n" \
                      f"Gold Diff At 15: {data['golddiffat15']:.2f} \n" \
                      f"CS Diff At 15: {data['csdiffat15']:.2f} \n" \
@@ -72,7 +72,7 @@ async def profile(ctx, entity):
             output = f"{entity} Profile: \n \n" \
                      f"`Elo: {data['team_elo']:.2f} \n" \
                      f"TrueSkill Mu: {data['trueskill_sum_mu']:.2f} \n" \
-                     f"EGPM Dominance: {data['egpm_dominance_ema_after']:.2f} \n" \
+                     f"EGPM Dominance: {data['egpm_dominance']:.2f} \n" \
                      f"K/D/A Ratio: {data['kda']:.2f} \n" \
                      f"Gold Diff At 15: {data['golddiffat15']:.2f} \n" \
                      f"CS Diff At 15: {data['csdiffat15']:.2f} \n" \
@@ -148,6 +148,31 @@ async def mock_draft(ctx, team):
         output = f"```{team} Last Fielded Roster: \n \n" \
                  f"{players} \n" \
                  "NOTE: This model does NOT track substitutions/roster swaps for upcoming games!```"
+    except Exception as e:
+        output = f"Something went wrong, sorry about that. \n" \
+                 "If this is still breaking, ping ProjektZero for support. \n" \
+                 "Error: \n" \
+                 f"```{e}```"
+    await message.edit(content=output)
+
+
+@bot.command(name='best_of')
+async def mock_draft(ctx, count, team1, team1_odds, team2):
+    prelim = "```Calculating...```"
+    message = await ctx.send(content=prelim)
+
+    try:
+        int_count = int(count)
+        odds = float(team1_odds)
+        opp_odds = 1 - float(team1_odds)
+
+        if int_count == 3:
+            output = mp.best_of_three(team1, odds, team2, opp_odds)
+        elif int_count == 5:
+            output = mp.best_of_five(team1, odds, team2, opp_odds)
+        else:
+            raise ValueError("Series count must be 3 or 5.")
+
     except Exception as e:
         output = f"Something went wrong, sorry about that. \n" \
                  "If this is still breaking, ping ProjektZero for support. \n" \

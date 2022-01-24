@@ -83,6 +83,7 @@ def enrich_dataset(player_data: pd.DataFrame,
                                        "kda_ema_after", "golddiffat15_ema_after",
                                        "csdiffat15_ema_after", "dkpoints_ema_after"]]
     flattened_teams = flattened_teams.rename(columns={'team_elo_after': 'team_elo',
+                                                      'egpm_dominance_ema_after': 'egpm_dominance',
                                                       'kda_ema_after': 'kda',
                                                       'golddiffat15_ema_after': 'golddiffat15',
                                                       'csdiffat15_ema_after': 'csdiffat15',
@@ -92,18 +93,19 @@ def enrich_dataset(player_data: pd.DataFrame,
     flattened_players = (player_data.sort_values(['playerid', 'date']).groupby(['playerid', 'teamid'])
                          .tail(1).reset_index(drop=True))
     flattened_players = flattened_players[["date", "league", "teamname", "position",
-                                           "playername", "playerid", "player_elo_after", "trueskill_mu",
-                                           "trueskill_sigma", "egpm_dominance_ema_after",
+                                           "playername", "playerid", "player_elo_after",
+                                           "egpm_dominance_ema_after",
                                            "blue_side_ema_after", "red_side_ema_after",
                                            "kda_ema_after", "golddiffat15_ema_after",
                                            "csdiffat15_ema_after", "dkpoints_ema_after"]]
     flattened_players = flattened_players.rename(columns={'player_elo_after': 'player_elo',
+                                                          'egpm_dominance_ema_after': 'egpm_dominance',
                                                           'kda_ema_after': 'kda',
                                                           'golddiffat15_ema_after': 'golddiffat15',
                                                           'csdiffat15_ema_after': 'csdiffat15',
                                                           'dkpoints_ema_after': 'dkpoints'})
-    flattened_players[["trueskill_mu_after",
-                       "trueskill_sigma_after"]] = flattened_players.apply(lambda row: [ts_lookup[row.playerid].mu,
+    flattened_players[["trueskill_mu",
+                       "trueskill_sigma"]] = flattened_players.apply(lambda row: [ts_lookup[row.playerid].mu,
                                                                                         ts_lookup[row.playerid].sigma],
                                                                            axis=1, result_type='expand')
     flattened_players.to_csv(filepath.joinpath('data', 'processed', 'flattened_players.csv'), index=False)
