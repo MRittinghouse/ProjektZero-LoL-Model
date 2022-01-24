@@ -186,7 +186,7 @@ def validate_trueskill(teams: pd.DataFrame, directory: Path, graph: bool):
                             hue='result')
 
         grf.ax_joint.text((teams['trueskill_sum_mu'].mean() -
-                          (teams['trueskill_sum_mu'].mean() * 0.25)),
+                          (teams['trueskill_sum_mu'].mean() * 0.125)),
                           teams['opponent_sum_mu'].max(),
                           f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}',
                           bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
