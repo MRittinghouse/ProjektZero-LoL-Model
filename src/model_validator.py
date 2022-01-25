@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import seaborn as sns
-from sklearn.metrics import log_loss
+from sklearn.metrics import log_loss, brier_score_loss
 
 sns.set_style("darkgrid")
 
@@ -48,6 +48,8 @@ def validate_team_elo(teams: pd.DataFrame, directory: Path, graph: bool):
         Variable describing the number of predictions that this model had correct.
     logloss: float
         Variable describing the log loss, as defined by sklearn.metrics, of the model.
+    brier: float
+        Variable describing the Brier loss score, as defined by sklearn.metrics, of the model.
     """
     # Data Preparation
     teams['opp_team_elo'] = teams['team_elo_before'] - teams['team_elo_diff']
@@ -60,6 +62,7 @@ def validate_team_elo(teams: pd.DataFrame, directory: Path, graph: bool):
     # Label Accuracy and Log Loss
     correct = len(teams[teams['team_elo_expected_result'] == teams['result']]) / len(teams)
     logloss = log_loss(teams['result'], teams['team_elo_win_perc'], labels=[0, 1])
+    brier = brier_score_loss(teams['result'], teams['team_elo_win_perc'])
 
     # Generate Graph
     if graph:
@@ -69,8 +72,8 @@ def validate_team_elo(teams: pd.DataFrame, directory: Path, graph: bool):
                             hue='result')
 
         grf.ax_joint.text(teams['team_elo_before'].mean(),
-                          teams['opp_team_elo'].max(),
-                          f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}',
+                          (teams['opp_team_elo'].max() - (teams['opp_team_elo'].max() * 0.02)),
+                          f'Acc.: {correct:.4f} \nLog Loss: {logloss:.4f} \nBrier: {brier: .4f}',
                           bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
 
         # Format and Export
@@ -83,7 +86,7 @@ def validate_team_elo(teams: pd.DataFrame, directory: Path, graph: bool):
         plt.show()
         plt.clf()
 
-    return correct, logloss
+    return correct, logloss, brier
 
 
 def validate_player_elo(teams: pd.DataFrame, directory: Path, graph: bool):
@@ -107,6 +110,8 @@ def validate_player_elo(teams: pd.DataFrame, directory: Path, graph: bool):
         Variable describing the number of predictions that this model had correct.
     logloss: float
         Variable describing the log loss, as defined by sklearn.metrics, of the model.
+    brier: float
+        Variable describing the Brier loss score, as defined by sklearn.metrics, of the model.
     """
     # Data Preparation
     teams['opp_player_elo'] = teams['player_elo_before'] - teams['player_elo_diff']
@@ -119,6 +124,7 @@ def validate_player_elo(teams: pd.DataFrame, directory: Path, graph: bool):
     # Label Accuracy and Log Loss
     correct = len(teams[teams['player_elo_expected_result'] == teams['result']]) / len(teams)
     logloss = log_loss(teams['result'], teams['player_elo_win_perc'], labels=[0, 1])
+    brier = brier_score_loss(teams['result'], teams['player_elo_win_perc'])
 
     # Generate Graph
     if graph:
@@ -128,8 +134,8 @@ def validate_player_elo(teams: pd.DataFrame, directory: Path, graph: bool):
                             hue='result')
 
         grf.ax_joint.text(teams['player_elo_before'].mean(),
-                          teams['opp_player_elo'].max(),
-                          f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}',
+                          (teams['opp_player_elo'].max() - (teams['opp_player_elo'].max() * 0.02)),
+                          f'Acc.: {correct:.4f} \nLog Loss: {logloss:.4f} \nBrier: {brier: .4f}',
                           bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
 
         # Format and Export
@@ -142,7 +148,7 @@ def validate_player_elo(teams: pd.DataFrame, directory: Path, graph: bool):
         plt.show()
         plt.clf()
 
-    return correct, logloss
+    return correct, logloss, brier
 
 
 def validate_trueskill(teams: pd.DataFrame, directory: Path, graph: bool):
@@ -166,6 +172,8 @@ def validate_trueskill(teams: pd.DataFrame, directory: Path, graph: bool):
         Variable describing the number of predictions that this model had correct.
     logloss: float
         Variable describing the log loss, as defined by sklearn.metrics, of the model.
+    brier: float
+        Variable describing the Brier loss score, as defined by sklearn.metrics, of the model.
     """
     # Data Preparation
     teams['trueskill_expected_result'] = np.where(teams['trueskill_win_perc'] >= 0.5, 1, 0)
@@ -177,6 +185,7 @@ def validate_trueskill(teams: pd.DataFrame, directory: Path, graph: bool):
     # Label Accuracy and Log Loss
     correct = len(teams[teams['trueskill_expected_result'] == teams['result']]) / len(teams)
     logloss = log_loss(teams['result'], teams['trueskill_win_perc'], labels=[0, 1])
+    brier = brier_score_loss(teams['result'], teams['trueskill_win_perc'])
 
     # Generate Graph
     if graph:
@@ -187,8 +196,8 @@ def validate_trueskill(teams: pd.DataFrame, directory: Path, graph: bool):
 
         grf.ax_joint.text((teams['trueskill_sum_mu'].mean() -
                           (teams['trueskill_sum_mu'].mean() * 0.125)),
-                          teams['opponent_sum_mu'].max(),
-                          f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}',
+                          (teams['opponent_sum_mu'].max() - (teams['opponent_sum_mu'].max() * 0.01)),
+                          f'Acc.: {correct:.4f} \nLog Loss: {logloss:.4f} \nBrier: {brier: .4f}',
                           bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
 
         # Format and Export
@@ -201,7 +210,7 @@ def validate_trueskill(teams: pd.DataFrame, directory: Path, graph: bool):
         plt.show()
         plt.clf()
 
-    return correct, logloss
+    return correct, logloss, brier
 
 
 def validate_egpm_dominance(teams: pd.DataFrame, directory: Path, graph: bool):
@@ -225,6 +234,8 @@ def validate_egpm_dominance(teams: pd.DataFrame, directory: Path, graph: bool):
         Variable describing the number of predictions that this model had correct.
     logloss: float
         Variable describing the log loss, as defined by sklearn.metrics, of the model.
+    brier: float
+        Variable describing the Brier loss score, as defined by sklearn.metrics, of the model.
     """
     # Data Preparation
     teams['egpm_dominance_expected_result'] = np.where(teams['egpm_dominance_win_perc'] >= 0.5, 1, 0)
@@ -236,6 +247,7 @@ def validate_egpm_dominance(teams: pd.DataFrame, directory: Path, graph: bool):
     # Label Accuracy and Log Loss
     correct = len(teams[teams['egpm_dominance_expected_result'] == teams['result']]) / len(teams)
     logloss = log_loss(teams['result'], teams['egpm_dominance_win_perc'], labels=[0, 1])
+    brier = brier_score_loss(teams['result'], teams['egpm_dominance_win_perc'])
 
     # Generate Graph
     if graph:
@@ -246,8 +258,9 @@ def validate_egpm_dominance(teams: pd.DataFrame, directory: Path, graph: bool):
 
         grf.ax_joint.text((teams['egpm_dominance_ema_before'].min() +
                            (teams['egpm_dominance_ema_before'].mean() * 0.25)),
-                          teams['opp_egpm_dominance_ema_before'].max(),
-                          f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}',
+                          (teams['opp_egpm_dominance_ema_before'].max() -
+                           (teams['opp_egpm_dominance_ema_before'].max() * 0.04)),
+                          f'Acc.: {correct:.4f} \nLog Loss: {logloss:.4f} \nBrier: {brier: .4f}',
                           bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
 
         # Format and Export
@@ -260,7 +273,7 @@ def validate_egpm_dominance(teams: pd.DataFrame, directory: Path, graph: bool):
         plt.show()
         plt.clf()
 
-    return correct, logloss
+    return correct, logloss, brier
 
 
 def validate_side_ema(teams: pd.DataFrame, directory: Path, graph: bool):
@@ -284,6 +297,8 @@ def validate_side_ema(teams: pd.DataFrame, directory: Path, graph: bool):
         Variable describing the number of predictions that this model had correct.
     logloss: float
         Variable describing the log loss, as defined by sklearn.metrics, of the model.
+    brier: float
+        Variable describing the Brier loss score, as defined by sklearn.metrics, of the model.
     """
     # Data Preparation
     teams['side_ema_expected_result'] = np.where(teams['side_ema_win_perc'] >= 0.5, 1, 0)
@@ -295,6 +310,7 @@ def validate_side_ema(teams: pd.DataFrame, directory: Path, graph: bool):
     # Label Accuracy and Log Loss
     correct = len(teams[teams['side_ema_expected_result'] == teams['result']]) / len(teams)
     logloss = log_loss(teams['result'], teams['side_ema_win_perc'], labels=[0, 1])
+    brier = brier_score_loss(teams['result'], teams['side_ema_win_perc'])
 
     # Generate Graph
     if graph:
@@ -304,8 +320,8 @@ def validate_side_ema(teams: pd.DataFrame, directory: Path, graph: bool):
                             hue='result')
 
         grf.ax_joint.text(teams['side_ema_before'].mean(),
-                          teams['opp_side_ema_before'].max(),
-                          f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}',
+                          (teams['opp_side_ema_before'].max() - (teams['opp_side_ema_before'].max() * 0.01)),
+                          f'Acc.: {correct:.4f} \nLog Loss: {logloss:.4f} \nBrier: {brier: .4f}',
                           bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
 
         # Format and Export
@@ -318,7 +334,7 @@ def validate_side_ema(teams: pd.DataFrame, directory: Path, graph: bool):
         plt.show()
         plt.clf()
 
-    return correct, logloss
+    return correct, logloss, brier
 
 
 def validate_ensemble_accuracy(teams: pd.DataFrame,
@@ -361,10 +377,13 @@ def validate_ensemble_accuracy(teams: pd.DataFrame,
         Variable describing the number of predictions that this model had correct.
     logloss: float
         Variable describing the log loss, as defined by sklearn.metrics, of the model.
+    brier: float
+        Variable describing the Brier loss score, as defined by sklearn.metrics, of the model.
     """
     # Data Preparation
     teams['result'] = teams.result.astype('int32')
-    sum_accuracy = team_accuracy + player_accuracy + egpm_dom_accuracy + side_ema_accuracy + trueskill_accuracy
+    sum_accuracy = (team_accuracy + player_accuracy + egpm_dom_accuracy +
+                    side_ema_accuracy + trueskill_accuracy)
     teams['ensemble_win_perc'] = ((teams['team_elo_win_perc'] * (team_accuracy / sum_accuracy)) +
                                   (teams['player_elo_win_perc'] * (player_accuracy / sum_accuracy)) +
                                   (teams['trueskill_win_perc'] * (trueskill_accuracy / sum_accuracy)) +
@@ -379,6 +398,7 @@ def validate_ensemble_accuracy(teams: pd.DataFrame,
     # Label Accuracy and Log Loss
     correct = len(teams[teams['ensemble_expected_result'] == teams['result']]) / len(teams)
     logloss = log_loss(teams['result'], teams['ensemble_win_perc'], labels=[0, 1])
+    brier = brier_score_loss(teams['result'], teams['ensemble_win_perc'])
 
     # Generate Graph
     if graph:
@@ -389,9 +409,9 @@ def validate_ensemble_accuracy(teams: pd.DataFrame,
                             ylim=(0, 1),
                             hue='result')
 
-        grf.ax_joint.text(0.15,
-                          0.95,
-                          f'Acc.: {correct:.4f} / Log Loss: {logloss:.4f}',
+        grf.ax_joint.text(0.4,
+                          0.85,
+                          f'Acc.: {correct:.4f} \nLog Loss: {logloss:.4f} \nBrier: {brier: .4f}',
                           bbox=dict(facecolor='grey', edgecolor='black', boxstyle='round'))
 
         # Format and Export
@@ -404,7 +424,7 @@ def validate_ensemble_accuracy(teams: pd.DataFrame,
         plt.show()
         plt.clf()
 
-    return correct, logloss
+    return correct, logloss, brier
 
 
 def generate_validation_metrics(graph: bool):
@@ -426,22 +446,23 @@ def generate_validation_metrics(graph: bool):
     directory = Path.cwd().parent.joinpath('reports', 'figures')
 
     # Validation Individual Core Models
-    te_acc, te_lls = validate_team_elo(team_data, directory, graph)
-    pe_acc, pe_lls = validate_player_elo(team_data, directory, graph)
-    ts_acc, ts_lls = validate_trueskill(team_data, directory, graph)
-    ed_acc, ed_lls = validate_egpm_dominance(team_data, directory, graph)
-    se_acc, se_lls = validate_side_ema(team_data, directory, graph)
+    te_acc, te_lls, te_br = validate_team_elo(team_data, directory, graph)
+    pe_acc, pe_lls, pe_br = validate_player_elo(team_data, directory, graph)
+    ts_acc, ts_lls, ts_br = validate_trueskill(team_data, directory, graph)
+    ed_acc, ed_lls, ed_br = validate_egpm_dominance(team_data, directory, graph)
+    se_acc, se_lls, se_br = validate_side_ema(team_data, directory, graph)
 
     # Validate Ensemble Prediction
-    es_acc, es_lls = validate_ensemble_accuracy(team_data, te_acc, pe_acc, ts_acc, ed_acc, se_acc, directory, graph)
+    es_acc, es_lls, es_br = validate_ensemble_accuracy(team_data, te_acc, pe_acc, ts_acc, ed_acc, se_acc,
+                                                       directory, graph)
 
     # Generate Validation Variable
-    validation = {"team_accuracy": te_acc, "team_logloss": te_lls,
-                  "player_accuracy": pe_acc, "player_logloss": pe_lls,
-                  "trueskill_accuracy": ts_acc, "trueskill_logloss": ts_lls,
-                  "egpm_dom_accuracy": ed_acc, "egpm_dom_logloss": ed_lls,
-                  "side_ema_accuracy": se_acc, "side_ema_logloss": se_lls,
-                  "ensemble_accuracy": es_acc, "ensemble_logloss": es_lls}
+    validation = {"team_accuracy": te_acc, "team_logloss": te_lls, "team_brier": te_br,
+                  "player_accuracy": pe_acc, "player_logloss": pe_lls, "player_brier": pe_br,
+                  "trueskill_accuracy": ts_acc, "trueskill_logloss": ts_lls, "trueskill_brier": ts_br,
+                  "egpm_dom_accuracy": ed_acc, "egpm_dom_logloss": ed_lls, "egpm_dom_brier": ed_br,
+                  "side_ema_accuracy": se_acc, "side_ema_logloss": se_lls, "side_ema_brier": se_br,
+                  "ensemble_accuracy": es_acc, "ensemble_logloss": es_lls, "ensemble_brier": es_br}
 
     return validation
 
@@ -453,14 +474,15 @@ def main():
     directory = Path.cwd().parent.joinpath('reports', 'figures')
 
     # Validation Individual Core Models
-    te_acc, te_lls = validate_team_elo(team_data, directory, True)
-    pe_acc, pe_lls = validate_player_elo(team_data, directory, True)
-    ts_acc, ts_lls = validate_trueskill(team_data, directory, True)
-    ed_acc, ed_lls = validate_egpm_dominance(team_data, directory, True)
-    se_acc, se_lls = validate_side_ema(team_data, directory, True)
+    te_acc, te_lls, te_br = validate_team_elo(team_data, directory, True)
+    pe_acc, pe_lls, pe_br = validate_player_elo(team_data, directory, True)
+    ts_acc, ts_lls, ts_br = validate_trueskill(team_data, directory, True)
+    ed_acc, ed_lls, ed_br = validate_egpm_dominance(team_data, directory, True)
+    se_acc, se_lls, se_br = validate_side_ema(team_data, directory, True)
 
     # Validate Ensemble Prediction
-    validate_ensemble_accuracy(team_data, te_acc, pe_acc, ts_acc, ed_acc, se_acc, directory, True)
+    validate_ensemble_accuracy(team_data, te_acc, pe_acc, ts_acc, ed_acc, se_acc,
+                               directory, True)
 
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):
