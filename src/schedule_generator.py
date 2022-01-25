@@ -73,7 +73,7 @@ def schedule_predictor(blue_name: str, red_name: str):
         match = match[["blue_win_chance", "deviation"]]
         return match["blue_win_chance"].iloc[0], match["deviation"].iloc[0]
     except Exception as e:
-        #print(f"Error: {blue_name}, {red_name}, {e}")
+        print(f"Error: {blue_name}, {red_name}, {e}")
         return np.nan, np.nan
 
 

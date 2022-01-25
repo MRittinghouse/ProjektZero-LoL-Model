@@ -12,6 +12,7 @@ from os import getenv
 import pandas as pd
 from pathlib import Path
 import src.match_predictor as mp
+import src.model_validator as mv
 from src.team import Team
 import nest_asyncio
 
@@ -36,7 +37,7 @@ async def schedule(ctx, league):
         output = output[output["league"] == league].drop(['league'], axis=1).reset_index(drop=True)
         output = f"Upcoming {league} Games (Next 10 Games Within 5 Days): \n \n" \
                  f"`{output.head(10).to_markdown()}` \n \n" \
-                 "`NOTE: Win percentages use the last fielded roster! Try predict_draft if you need substitutions.`"
+                 "`NOTE: Win percentages use the last fielded roster! Try !predict if you need substitutions.`"
     except Exception as e:
         output = f"Something went wrong, sorry about that. \n" \
                  "If this is still breaking, ping ProjektZero for support. \n" \
@@ -138,7 +139,7 @@ async def mock_draft(ctx, blue1, blue2, blue3, blue4, blue5,
 
 
 @bot.command(name='roster')
-async def mock_draft(ctx, team):
+async def roster(ctx, team):
     prelim = "```Calculating...```"
     message = await ctx.send(content=prelim)
 
@@ -157,7 +158,7 @@ async def mock_draft(ctx, team):
 
 
 @bot.command(name='best_of')
-async def mock_draft(ctx, count, team1, team1_odds, team2):
+async def best_of(ctx, count, team1, team1_odds, team2):
     prelim = "```Calculating...```"
     message = await ctx.send(content=prelim)
 
@@ -179,6 +180,81 @@ async def mock_draft(ctx, count, team1, team1_odds, team2):
                  "Error: \n" \
                  f"```{e}```"
     await message.edit(content=output)
+
+
+@bot.command(name='validation')
+async def validation(ctx, method, graph):
+    try:
+        vld = mv.generate_validation_metrics(graph=False)
+        true_vals = ["Yes", "yes", "True", "true", "1", "Graph", "graph"]
+
+        if method.lower() == "team elo":
+            acc = vld['team_accuracy']
+            lls = vld['team_logloss']
+            brier = vld['team_brier']
+            metrics = f"`{method} Accuracy: {acc:.5f}, Log Loss: {lls:.5f}, Brier Score: {brier:.5f}`"
+            if str(graph) in true_vals:
+                with open(Path.cwd().parent.joinpath('reports', 'figures', 'TeamElo_Validation.png'), 'rb') as f:
+                    image = discord.File(f)
+
+        elif method.lower() == "player elo":
+            acc = vld['player_accuracy']
+            lls = vld['player_logloss']
+            brier = vld['player_brier']
+            metrics = f"`{method} Accuracy: {acc:.5f}, Log Loss: {lls:.5f}, Brier Score: {brier:.5f}`"
+            if str(graph) in true_vals:
+                with open(Path.cwd().parent.joinpath('reports', 'figures', 'PlayerElo_Validation.png'), 'rb') as f:
+                    image = discord.File(f)
+
+        elif method.lower() == "trueskill":
+            acc = vld['trueskill_accuracy']
+            lls = vld['trueskill_logloss']
+            brier = vld['trueskill_brier']
+            metrics = f"`{method} Accuracy: {acc:.5f}, Log Loss: {lls:.5f}, Brier Score: {brier:.5f}`"
+            if str(graph) in true_vals:
+                with open(Path.cwd().parent.joinpath('reports', 'figures', 'TrueSkill_Validation.png'), 'rb') as f:
+                    image = discord.File(f)
+
+        elif method.lower() == "side ema":
+            acc = vld['side_ema_accuracy']
+            lls = vld['side_ema_logloss']
+            brier = vld['side_ema_brier']
+            metrics = f"`{method} Accuracy: {acc:.5f}, Log Loss: {lls:.5f}, Brier Score: {brier:.5f}`"
+            if str(graph) in true_vals:
+                with open(Path.cwd().parent.joinpath('reports', 'figures', 'SideEMA_Validation.png'), 'rb') as f:
+                    image = discord.File(f)
+
+        elif method.lower() == "egpm dom":
+            acc = vld['egpm_dom_accuracy']
+            lls = vld['egpm_dom_logloss']
+            brier = vld['egpm_dom_brier']
+            metrics = f"`{method} Accuracy: {acc:.5f}, Log Loss: {lls:.5f}, Brier Score: {brier:.5f}`"
+            if str(graph) in true_vals:
+                with open(Path.cwd().parent.joinpath('reports', 'figures', 'EGPMDom_Validation.png'), 'rb') as f:
+                    image = discord.File(f)
+
+        elif method.lower() == "ensemble":
+            acc = vld['ensemble_accuracy']
+            lls = vld['ensemble_logloss']
+            brier = vld['ensemble_brier']
+            metrics = f"`{method} Accuracy: {acc:.5f}, Log Loss: {lls:.5f}, Brier Score: {brier:.5f}`"
+            if str(graph) in true_vals:
+                with open(Path.cwd().parent.joinpath('reports', 'figures', 'EnsembleModel_Validation.png'), 'rb') as f:
+                    image = discord.File(f)
+
+        else:
+            raise ValueError("Method must be either team elo, player elo, trueskill, side ema, egpm dom, or ensemble.")
+
+        if str(graph) in true_vals:
+            await ctx.send(content=metrics, file=image)
+        else:
+            await ctx.send(content=metrics)
+    except Exception as e:
+        output = f"Something went wrong, sorry about that. \n" \
+                 "If this is still breaking, ping ProjektZero for support. \n" \
+                 "Error: \n" \
+                 f"```{e}```"
+        await ctx.send(content=output)
 
 
 bot.run(token)

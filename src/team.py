@@ -57,7 +57,7 @@ class Team:
             roster = self._get_last_roster(player_data)
             self.team_exists = True
             self.team_elo = team_data.team_elo.mean()
-            self.team_egpm_dom = team_data.egpm_dominance_ema_after.mean()
+            self.team_egpm_dom = team_data.egpm_dominance.mean()
         elif lower_name in ["first 5", "second 5"]:
             pass
         else:
@@ -86,7 +86,7 @@ class Team:
             for d in diff:
                 substitute = {'date': '1/1/2022 23:59', 'teamname': 'Null', 'position': 'Null',
                               'playername': d, 'player_elo': 1100, 'trueskill_mu': 21, 'trueskill_sigma': 8,
-                              'egpm_dominance_ema_after': 198, 'blue_side_ema_after': 0.4, 'red_side_ema_after': 0.4}
+                              'egpm_dominance': 198, 'blue_side_ema_after': 0.4, 'red_side_ema_after': 0.4}
                 data = data.append(substitute, ignore_index=True)
             self.warning += f"\n WARNING: {str(diff)} not found in database. Substitute values were used."
         elif len(data) > 5:
@@ -95,7 +95,7 @@ class Team:
         self.player_elo = data.player_elo.mean()
         self.player_trueskill_mu = data.trueskill_mu.sum()
         self.player_trueskill_sigma = data.trueskill_sigma.to_list()
-        self.player_egpm_dom = data.egpm_dominance_ema_after.sum()
+        self.player_egpm_dom = data.egpm_dominance.sum()
         self.side_win_rate = data.blue_side_ema_after.mean() if self.side.lower() == "blue" \
             else data.red_side_ema_after.mean()
 
