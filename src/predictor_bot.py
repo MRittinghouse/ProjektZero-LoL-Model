@@ -8,9 +8,11 @@ It is intended to allow users to call down predictions.
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+from io import StringIO
 from os import getenv
 import pandas as pd
 from pathlib import Path
+import requests
 import src.match_predictor as mp
 import src.model_validator as mv
 from src.team import Team
@@ -37,7 +39,8 @@ async def schedule(ctx, league):
         output = output[output["league"] == league].drop(['league'], axis=1).reset_index(drop=True)
         output = f"Upcoming {league} Games (Next 10 Games Within 5 Days): \n \n" \
                  f"`{output.head(10).to_markdown()}` \n \n" \
-                 "`NOTE: Win percentages use the last fielded roster! Try !predict if you need substitutions.`"
+                 "`NOTE: Predictions use the last fielded roster. Try !predict if you need substitutions.`\n" \
+                 "`NOTE: Win percentages are for Bo1 format. Use the !best_of to get Bo3/Bo5 odds if needed.`"
     except Exception as e:
         output = f"Something went wrong, sorry about that. \n" \
                  "If this is still breaking, ping ProjektZero for support. \n" \
@@ -182,8 +185,8 @@ async def best_of(ctx, count, team1, team1_odds, team2):
     await message.edit(content=output)
 
 
-@bot.command(name='validation')
-async def validation(ctx, method, graph):
+@bot.command(name='validate')
+async def validate(ctx, method, graph):
     try:
         vld = mv.generate_validation_metrics(graph=False)
         true_vals = ["Yes", "yes", "True", "true", "1", "Graph", "graph"]
@@ -255,6 +258,18 @@ async def validation(ctx, method, graph):
                  "Error: \n" \
                  f"```{e}```"
         await ctx.send(content=output)
+
+
+@bot.command(name='dfs_roster')
+async def dfs_roster(ctx):
+    attachment_url = ctx.message.attachments[0].url
+    # content = attachment_url
+    file_request = requests.get(attachment_url)
+    data = file_request.content.decode("utf8")
+    data = pd.read_csv(StringIO(data), low_memory=False)
+    output = str(len(data))
+
+    await ctx.send(content=output)
 
 
 bot.run(token)

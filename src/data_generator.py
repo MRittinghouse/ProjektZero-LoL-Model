@@ -107,7 +107,7 @@ def enrich_dataset(player_data: pd.DataFrame,
     flattened_players[["trueskill_mu",
                        "trueskill_sigma"]] = flattened_players.apply(lambda row: [ts_lookup[row.playerid].mu,
                                                                                   ts_lookup[row.playerid].sigma],
-                                                                           axis=1, result_type='expand')
+                                                                     axis=1, result_type='expand')
     flattened_players.to_csv(filepath.joinpath('data', 'processed', 'flattened_players.csv'), index=False)
 
     return team_data, player_data

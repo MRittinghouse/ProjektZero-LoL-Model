@@ -79,7 +79,13 @@ class Team:
         players = [s.lower() for s in players]
 
         data = player_data[player_data.playername.str.lower().isin(players)]
-        data = data[data['date'] == data['date'].max()]
+        data = (data.sort_values(['playername', 'date'])
+                .groupby(['playername'])
+                .tail(1)
+                .reset_index(drop=True))
+        if len(data) > 5:
+            most_common_league = data.league.mode().iloc[0]
+            data = data[data['league'] == most_common_league].reset_index(drop=True)
         if len(data) < 5:
             df_players = list(data.playername.str.lower().unique())
             diff = np.setdiff1d(players, df_players)
@@ -90,7 +96,7 @@ class Team:
                 data = data.append(substitute, ignore_index=True)
             self.warning += f"\n WARNING: {str(diff)} not found in database. Substitute values were used."
         elif len(data) > 5:
-            raise ValueError('Team cannot have more than 5 player values.')
+            raise ValueError(f'Team cannot have more than 5 player values. \n \n {data}')
 
         self.player_elo = data.player_elo.mean()
         self.player_trueskill_mu = data.trueskill_mu.sum()
@@ -101,4 +107,4 @@ class Team:
 
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):
-    print(Team("Team BDS", "Blue", "Adam", "Cinkrof", "NUCLEARINT", "xMatty", "Limit"))
+    print(Team("Oh My God"))

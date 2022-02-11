@@ -467,6 +467,11 @@ def generate_validation_metrics(graph: bool):
     return validation
 
 
+def historical_performance_graph(algorithm: str, league: str, weeks: int):
+    # This is a work in progress. Will expand later.
+    return None
+
+
 # Main
 def main():
     # Data Imports

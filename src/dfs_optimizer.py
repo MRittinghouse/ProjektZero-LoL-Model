@@ -17,61 +17,40 @@ import json
 import random
 import pandas as pd
 import sys
-                        
+
+
 # Function Library
-def prep_dk_csv(filepath, fadelist):
-    # Import Data From Filepath
-    dk = pd.read_csv(f'{filepath}')
-    
+def prep_dk_csv(dk, fade_list):
     # Subset/Format Data
     dk['Name'] = dk['Name'].str.strip()
-    dk = dk[~dk['Name'].isin(fadelist)]
-    
-    dk1 = dk[~dk['Position'].isin(['TEAM'])]
-    dk1 = dk1.sort_values(['TeamAbbrev', 'Position', 'Name'], 
-                          ignore_index=True)
-    starting = list(dk1.Name.unique())
-    
-    
-    ## Define Daily Matches And Favorites
-    RawMatchList = list(set(dk['Game Info']))
-    dk = dk.drop(columns=['Game Info'])
-    MatchList = []
-    
-    for match in RawMatchList:
+    dk = dk[~dk['Name'].isin(fade_list)]
+
+    # Define Daily Matches And Favorites
+    raw_match_list = list(set(dk['Game Info']))
+    match_list = []
+
+    for match in raw_match_list:
         sep = ' '
         match = match.split(sep, 1)[0]
         match = match.replace("@", '" , "')
-        match = '["'+match+'"]'
-        MatchList.append(match)
-        
-    ## Define Daily Matches And Favorites
-    RawMatchList = list(set(dk['Game Info']))
-    dk = dk.drop(columns=['Game Info'])
-    MatchList = []
-    
-    for match in RawMatchList:
-        sep = ' '
-        match = match.split(sep, 1)[0]
-        match = match.replace("@", '" , "')
-        match = '["'+match+'"]'
-        MatchList.append(match)
-    
-    ## Generate Match Evaluation String
+        match = '["' + match + '"]'
+        match_list.append(match)
+
+    # Generate Match Evaluation String
     i = 1
-    MatchString = "{"
-    for match in MatchList:
+    match_string = "{"
+    for match in match_list:
         string = "\"game" + str(i) + "\": " + match + ","
-        MatchString = MatchString + string
+        match_string = match_string + string
         i += 1
-        
-    MatchString = MatchString[:-1] + "}"
-    MatchString = json.loads(MatchString)
-    print('Today\'s games are... ' + str(MatchString) + '\n')
-    
-    return MatchString
-    
-def optimizer(filepath, salarycap=1500000, maxteamsize=3):
+
+    match_string = match_string[:-1] + "}"
+    match_string = json.loads(match_string)
+
+    return match_string
+
+
+def optimizer(df: pd.DataFrame, salary_cap=1500000, max_team_size=3):
     """
     Please note, this is a fairly naive optimizer. 
     However, it can be customized. You only need five core columns. 
@@ -83,14 +62,16 @@ def optimizer(filepath, salarycap=1500000, maxteamsize=3):
     
     Parameters
     ----------
+    df: pd.DataFrame
+        Pandas DataFrame containing DraftKings rosters and costs for the slate of interest.
     filepath : str
         The filepath to a .csv file containing columns ['role', 'player', 
         'team', 'salary', 'pts'] columns as shown on E1 Fantasy 
         (www.fantasy.esportsone.com/).
         Please note that the data in the 'role' column should be in all caps.
-    salarycap : int
+    salary_cap : int
         The total maximum amount of salary that you have to spend on players.
-    maxteamsize : int
+    max_team_size : int
         The maximum number of players permitted from the same team.
 
     Returns
@@ -99,87 +80,77 @@ def optimizer(filepath, salarycap=1500000, maxteamsize=3):
         An dict object containing the optimal DFS roster using E1 rules.
 
     """
-    df = pd.read_csv(f'{filepath}')
     df = df[['player', 'role', 'team', 'salary', 'pts']]
 
-    top  = df[df['role'] == 'TOP']
-    jng  = df[df['role'] == 'JNG']
-    mid  = df[df['role'] == 'MID']
-    adc  = df[df['role'] == 'BOT']
-    sup  = df[df['role'] == 'SUP']
+    top = df[df['role'] == 'TOP']
+    jng = df[df['role'] == 'JNG']
+    mid = df[df['role'] == 'MID']
+    adc = df[df['role'] == 'BOT']
+    sup = df[df['role'] == 'SUP']
     team = df[df['role'] == 'TEAM']
-    
-    
-    bestroster = {'Top':'', 
-         'Jng':'',
-         'Mid':'',
-         'Bot':'',
-         'Sup':'', 
-         'Team':'',
-         'Cost':int(0),
-         'Score':float(0)}
-    
-    for adcind, adcrow in adc.iterrows():
-        for midind, midrow in mid.iterrows():
-            for jngind, jngrow in jng.iterrows():
-                for topind, toprow in top.iterrows():
-                    for supind, suprow in sup.iterrows():
-                        for teamind, teamrow in team.iterrows():
-                            indcost = (top.at[topind,'salary']+
-                                       jng.at[jngind,'salary']+
-                                       mid.at[midind,'salary']+
-                                       adc.at[adcind,'salary']+
-                                       sup.at[supind,'salary']+
-                                       team.at[teamind,'salary'])
-                            indscore = 0.00
-                            indscore = (top.at[topind,'pts']+
-                                        jng.at[jngind,'pts']+
-                                        mid.at[midind,'pts']+
-                                        adc.at[adcind,'pts']+
-                                        sup.at[supind,'pts']+
-                                        team.at[teamind,'pts'])
-                                
-                            ## Remove rosters over salary cap or under point threshold
-                            if indcost>salarycap:
+
+    best_roster = {'Top': '', 'Jng': '', 'Mid': '', 'Bot': '', 'Sup': '', 'Team': '', 'Cost': int(0), 'Score': float(0)}
+
+    for adc_ind, adc_row in adc.iterrows():
+        for mid_ind, mid_row in mid.iterrows():
+            for jng_ind, jng_row in jng.iterrows():
+                for top_ind, top_row in top.iterrows():
+                    for sup_ind, sup_row in sup.iterrows():
+                        for team_ind, team_row in team.iterrows():
+                            ind_cost = (top.at[top_ind, 'salary'] +
+                                        jng.at[jng_ind, 'salary'] +
+                                        mid.at[mid_ind, 'salary'] +
+                                        adc.at[adc_ind, 'salary'] +
+                                        sup.at[sup_ind, 'salary'] +
+                                        team.at[team_ind, 'salary'])
+                            ind_score = (top.at[top_ind, 'pts'] +
+                                         jng.at[jng_ind, 'pts'] +
+                                         mid.at[mid_ind, 'pts'] +
+                                         adc.at[adc_ind, 'pts'] +
+                                         sup.at[sup_ind, 'pts'] +
+                                         team.at[team_ind, 'pts'])
+
+                            # Remove rosters over salary cap or under point threshold
+                            if ind_cost > salary_cap:
                                 continue
-                            if indscore<bestroster['pts']:
+                            if ind_score < best_roster['pts']:
                                 continue
-                                        
-                            topteam = top.at[topind,'team']
-                            topname = top.at[topind,'player']
-                            jngteam = jng.at[jngind,'team']
-                            jngname = jng.at[jngind,'player']
-                            midteam = mid.at[midind,'team']
-                            midname = mid.at[midind,'player']
-                            adcteam = adc.at[adcind,'team']
-                            adcname = adc.at[adcind,'player']
-                            supteam = sup.at[supind,'team']
-                            supname = sup.at[supind,'player']
-                            teamteam = team.at[teamind,'team']
-                            teamname = team.at[teamind,'player']
-                                        
-                            ## Remove rosters with more than 3 items from same team
-                            teams = [topteam, jngteam, midteam, adcteam, supteam, teamteam]
+
+                            top_team = top.at[top_ind, 'team']
+                            top_name = top.at[top_ind, 'player']
+                            jng_team = jng.at[jng_ind, 'team']
+                            jng_name = jng.at[jng_ind, 'player']
+                            mid_team = mid.at[mid_ind, 'team']
+                            mid_name = mid.at[mid_ind, 'player']
+                            adc_team = adc.at[adc_ind, 'team']
+                            adc_name = adc.at[adc_ind, 'player']
+                            sup_team = sup.at[sup_ind, 'team']
+                            sup_name = sup.at[sup_ind, 'player']
+                            team_team = team.at[team_ind, 'team']
+                            team_name = team.at[team_ind, 'player']
+
+                            # Remove rosters with more than 3 items from same team
+                            teams = [top_team, jng_team, mid_team, adc_team, sup_team, team_team]
                             flag = ""
                             for i in set(teams):
                                 count = teams.count(i)
-                                if count > maxteamsize:
+                                if count > max_team_size:
                                     flag = "Yes"
                             if flag == "Yes":
                                 continue
-                                            
-                            bestroster = {'Top':str(topteam+' '+topname), 
-                                          'Jng':str(jngteam+' '+jngname),
-                                          'Mid':str(midteam+' '+midname),
-                                          'ADC':str(adcteam+' '+adcname),
-                                          'Sup':str(supteam+' '+supname), 
-                                          'Team':str(teamteam+' '+teamname),
-                                          'Cost':int(indcost),
-                                          'Score':float(indscore)}
-                                
-    del bestroster['Score']
-    
-    if bestroster == '''{'Top': '', 'Jng': '', 'Mid': '', 'ADC': '', 'Sup': '', 'Team': '', 'Cost': 0}''':
+
+                            best_roster = {'Top': str(top_team + ' ' + top_name),
+                                           'Jng': str(jng_team + ' ' + jng_name),
+                                           'Mid': str(mid_team + ' ' + mid_name),
+                                           'ADC': str(adc_team + ' ' + adc_name),
+                                           'Sup': str(sup_team + ' ' + sup_name),
+                                           'Team': str(team_team + ' ' + team_name),
+                                           'Cost': int(ind_cost),
+                                           'Score': float(ind_score)}
+
+    del best_roster['Score']
+
+    if best_roster == '''{'Top': '', 'Jng': '', 'Mid': '', 'ADC': '', 'Sup': '', 'Team': '', 'Cost': 0}''':
         raise Exception("No mathematically possible rosters for this stack.")
     else:
-        return bestroster
+        return best_roster

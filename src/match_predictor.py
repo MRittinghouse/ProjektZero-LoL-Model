@@ -10,7 +10,6 @@ Tim provides an invaluable service to the League community.
 # Housekeeping
 import itertools
 import math
-import numpy as np
 import pandas as pd
 from scipy.stats import norm
 from src.team import Team
@@ -51,7 +50,7 @@ def predict_match(blue: Team, red: Team) -> pd.DataFrame:
                           "player_egpm_dom": [standard_prediction(blue.player_egpm_dom, red.player_egpm_dom)],
                           "side_win": [standard_prediction(blue.side_win_rate, red.side_win_rate)]})
 
-    if blue.team_exists and red.team_exists:
+    if blue.team_exists and red.team_exists and blue.name.lower() != 'first 5':
         match["team_elo"] = elo_prediction(blue.team_elo, red.team_elo)
         sum_accuracy = (weights["team_accuracy"] + weights["player_accuracy"] + weights["trueskill_accuracy"] +
                         weights["egpm_dom_accuracy"] + weights["side_ema_accuracy"])
@@ -212,7 +211,6 @@ def predict(blue_team: str, blue1: str, blue2: str, blue3: str, blue4: str, blue
     else:
         output = output[["blue", "red", "blue_win_chance", "deviation"]]
 
-
     output = "```ProjektZero Model Predictions: \n \n" \
              f"{output.copy().to_markdown()}"
 
@@ -242,8 +240,8 @@ def mock_draft(blue1: str, blue2: str, blue3: str, blue4: str, blue5: str,
     output = pd.concat([output, match], ignore_index=True)
 
     output = output[["blue", "red", "blue_win_chance", "deviation"]]
-    output = f"""```ProjektZero Model Predictions:
-{output.copy()}"""
+    output = "```ProjektZero Model Predictions:" \
+             f"{output.copy()}"
 
     if blue.warning != '\n WARNING: Team "First 5" not found in database. No team data was used.':
         output += f"\n{blue.warning}"
