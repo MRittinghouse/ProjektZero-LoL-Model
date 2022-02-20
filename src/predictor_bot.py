@@ -125,6 +125,36 @@ async def predict_verbose(ctx, blue_team, blue1, blue2, blue3, blue4, blue5, red
     await message.edit(content=output)
 
 
+@bot.command(name='predict_team')
+async def predict_team(ctx, blue_team, red_team):
+    prelim = "```Calculating...```"
+    message = await ctx.send(content=prelim)
+
+    try:
+        blue = Team(name=blue_team)
+        red = Team(name=red_team)
+
+        output = mp.predict_match(blue, red)
+        output = "```ProjektZero Model Predictions: \n \n" \
+                 f"{output.copy().to_markdown()}"
+
+        if blue.warning:
+            output += f"\n{blue.warning}"
+        if red.warning:
+            output += f"\n{red.warning}"
+
+        output += "\n \nNOTE: Predictions use the last fielded roster. Try !predict if you need substitutions." \
+                  "\nNOTE: Win percentages are for Bo1 format. Use the !best_of to get Bo3/Bo5 odds if needed." \
+                  "\nPlease consider supporting my obsessive coding habit at:" \
+                  "\n \thttps://www.buymeacoffee.com/projektzero``` "
+    except Exception as e:
+        output = f"Something went wrong, sorry about that. \n" \
+                 "If this is still breaking, ping ProjektZero for support. \n" \
+                 "Error: \n" \
+                 f"```{e}```"
+    await message.edit(content=output)
+
+
 @bot.command(name='mock_draft')
 async def mock_draft(ctx, blue1, blue2, blue3, blue4, blue5,
                      red1, red2, red3, red4, red5):

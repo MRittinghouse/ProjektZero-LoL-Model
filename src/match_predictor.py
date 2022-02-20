@@ -10,16 +10,27 @@ Tim provides an invaluable service to the League community.
 # Housekeeping
 import itertools
 import math
+import numpy as np
 import pandas as pd
+from pathlib import Path
+import pickle
 from scipy.stats import norm
+from sklearn.linear_model import LogisticRegression
 from src.team import Team
 from src.model_validator import generate_validation_metrics
 
 pd.options.display.float_format = '{:,.4f}'.format
 pd.set_option("display.max_rows", None, "display.max_columns", None)
 
+# Load EGPM Dominance Model
+filepath = Path.cwd().parent.joinpath('models', 'egpm_dom_logistic_regression.csv')
+egpm_model = pickle.load(open(filepath, 'rb'))
 
 def predict_match(blue: Team, red: Team) -> pd.DataFrame:
+    def standard_prediction(blue_stat: float, red_stat: float) -> float:
+        blue_win_perc = (blue_stat / (blue_stat + red_stat))
+        return blue_win_perc
+
     def elo_prediction(blue_team_elo: float, red_team_elo: float) -> float:
         blue_win_perc = 1.0 / (1 + 10 ** ((red_team_elo - blue_team_elo) / 400))
         return blue_win_perc
@@ -32,8 +43,9 @@ def predict_match(blue: Team, red: Team) -> pd.DataFrame:
         blue_win_perc = norm.cdf(delta_mu / denominator)
         return blue_win_perc
 
-    def standard_prediction(blue_stat: float, red_stat: float) -> float:
-        blue_win_perc = (blue_stat / (blue_stat + red_stat))
+    def egpm_dom_prediction(blue_team_egpm_dom: float, red_team_egpm_dom: float) -> float:
+        X = np.array([blue_team_egpm_dom, red_team_egpm_dom]).reshape(1, -1)
+        blue_win_perc = egpm_model.predict_proba(X)[:, 1]
         return blue_win_perc
 
     weights = generate_validation_metrics(graph=False)
@@ -46,7 +58,7 @@ def predict_match(blue: Team, red: Team) -> pd.DataFrame:
                                                                     red.player_trueskill_mu,
                                                                     red.player_trueskill_sigma,
                                                                     sigma_value=2.75)],
-                          "team_egpm_dom": [standard_prediction(blue.team_egpm_dom, red.team_egpm_dom)],
+                          "team_egpm_dom": [egpm_dom_prediction(blue.team_egpm_dom, red.team_egpm_dom)],
                           "player_egpm_dom": [standard_prediction(blue.player_egpm_dom, red.player_egpm_dom)],
                           "side_win": [standard_prediction(blue.side_win_rate, red.side_win_rate)]})
 
@@ -55,11 +67,11 @@ def predict_match(blue: Team, red: Team) -> pd.DataFrame:
         sum_accuracy = (weights["team_accuracy"] + weights["player_accuracy"] + weights["trueskill_accuracy"] +
                         weights["egpm_dom_accuracy"] + weights["side_ema_accuracy"])
 
-        match["blue_win_chance"] = ((match["team_elo"] * (weights["team_accuracy"] / sum_accuracy)) +
-                                    (match["player_elo"] * (weights["player_accuracy"] / sum_accuracy)) +
-                                    (match["player_trueskill"] * (weights["trueskill_accuracy"] / sum_accuracy)) +
-                                    (match["team_egpm_dom"] * (weights["egpm_dom_accuracy"] / sum_accuracy)) +
-                                    (match["side_win"] * (weights["side_ema_accuracy"] / sum_accuracy)))
+        match["blue_win_chance"] = float(((match["team_elo"] * (weights["team_accuracy"] / sum_accuracy)) +
+                                          (match["player_elo"] * (weights["player_accuracy"] / sum_accuracy)) +
+                                          (match["player_trueskill"] * (weights["trueskill_accuracy"] / sum_accuracy)) +
+                                          (match["team_egpm_dom"] * (weights["egpm_dom_accuracy"] / sum_accuracy)) +
+                                          (match["side_win"] * (weights["side_ema_accuracy"] / sum_accuracy))))
 
         match["deviation"] = match[["team_elo", "player_elo", "player_trueskill", "team_egpm_dom", "side_win"]].std(
             axis=1)

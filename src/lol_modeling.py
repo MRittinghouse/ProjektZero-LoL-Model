@@ -21,9 +21,13 @@ This code is intended to be imported into your analytics projects.
 import itertools
 import math
 import numpy as np
-from pandas import DataFrame
-import src.oracles_elixir as oe
 import pandas as pd
+from pandas import DataFrame
+from pathlib import Path
+import pickle
+import src.oracles_elixir as oe
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
 import trueskill
 from typing import Optional, Tuple, Dict, Any
 
@@ -46,7 +50,7 @@ def q90(x: pd.Series) -> np.ndarray:
 
 
 def elo_calculator(df: pd.DataFrame, entity: str,
-                   start_elo: int = 1200, k: int = 28,
+                   start_elo: int = 1200, k: int = 32,
                    league_modifiers: Optional[dict] = None) -> pd.DataFrame:
     """
     Calculate elo from Pandas dataframe.
@@ -60,7 +64,7 @@ def elo_calculator(df: pd.DataFrame, entity: str,
         start_elo: int
             Identifies the starting Elo (default=1200)
         k: int
-            The k-factor for the elo calculation (default=28)
+            The k-factor for the elo calculation (default=32)
         league_modifiers: dict
             Dictionary containing League names as the keys and weights from 0 to 1 as values.
     """
@@ -136,7 +140,7 @@ def elo_calculator(df: pd.DataFrame, entity: str,
     return elo_dataframe
 
 
-def team_elo(df: pd.DataFrame, start: int = 1200, k: int = 28) -> pd.DataFrame:
+def team_elo(df: pd.DataFrame, start: int = 1200, k: int = 32) -> pd.DataFrame:
     """
     Calculate team elo across a dataframe of Oracle's Elixir data.
 
@@ -148,7 +152,7 @@ def team_elo(df: pd.DataFrame, start: int = 1200, k: int = 28) -> pd.DataFrame:
         Integer value representing the starting / initial elo value.
     k: Integer
         Integer representing how much elo is gained/lost per match.
-        Testing suggests that 28 is an appropriate score for League games.
+        Testing suggests that 32 is an appropriate score for League games.
         Please research how elo is calculated before you modify.
 
     Returns
@@ -191,7 +195,7 @@ def team_elo(df: pd.DataFrame, start: int = 1200, k: int = 28) -> pd.DataFrame:
     return df
 
 
-def player_elo(df: pd.DataFrame, start: int = 1200, k: int = 28) -> pd.DataFrame:
+def player_elo(df: pd.DataFrame, start: int = 1200, k: int = 32) -> pd.DataFrame:
     """
     Calculate elo for a player dataframe.
 
@@ -203,7 +207,7 @@ def player_elo(df: pd.DataFrame, start: int = 1200, k: int = 28) -> pd.DataFrame
         Integer value representing the starting / initial elo value.
     k: Integer
         Integer representing how much elo is gained/lost per match.
-        Testing suggests that 28 is an appropriate score for League games.
+        Testing suggests that 32 is an appropriate score for League games.
         Please research how elo is calculated before you modify.
 
     Returns
@@ -689,41 +693,55 @@ def egpm_model(data: pd.DataFrame, entity: str) -> pd.DataFrame:
     # Data Setup
     if entity == 'team':
         identity = 'teamid'
-        elo = 'team_elo_before'
-        opp_elo = data['team_elo_before'] - data['team_elo_diff']
+        rank = data['trueskill_sum_mu']
+        opp_rank = data['opponent_sum_mu']
     elif entity == 'player':
         identity = 'playerid'
-        elo = 'player_elo_before'
-        opp_elo = data['player_elo_before'] - data['player_elo_diff']
+        rank = data['trueskill_mu']
+        opp_rank = data['opponent_mu']
     else:
         raise ValueError('Entity must be either PLAYER or TEAM.')
 
-    data['egpm_dominance_ratio'] = (data['earned gpm'] /
-                                    (opp_elo /
-                                     data[elo]))
-    data['opp_egpm_dominance_ratio'] = (data['opponent_egpm'] /
-                                        (data[elo] /
-                                         opp_elo))
+    data['egpm_dominance_ratio'] = (data['earned gpm'] / (opp_rank / rank))
+    data['opp_egpm_dominance_ratio'] = (data['opponent_egpm'] / (rank / opp_rank))
     data['egpm_dominance_ema_before'] = (data.groupby([identity])
                                          ['egpm_dominance_ratio']
                                          .transform(lambda x: x.ewm(halflife=5, ignore_na=True)
                                                     .mean().shift().bfill()))
+    data['egpm_dominance_ema_before'] = data['egpm_dominance_ema_before'].fillna(0)
     data['egpm_dominance_ema_after'] = (data.groupby([identity])
                                         ['egpm_dominance_ratio']
                                         .transform(lambda x: x.ewm(halflife=5, ignore_na=True).mean()))
+    data['egpm_dominance_ema_after'] = data['egpm_dominance_ema_after'].fillna(0)
     data['opp_egpm_dominance_ema_before'] = (data.groupby([identity])
                                              ['opp_egpm_dominance_ratio']
                                              .transform(lambda x: x.ewm(halflife=5, ignore_na=True)
                                                         .mean().shift().bfill()))
+    data['opp_egpm_dominance_ema_before'] = data['opp_egpm_dominance_ema_before'].fillna(0)
     data['opp_egpm_dominance_ema_after'] = (data.groupby([identity])
                                             ['opp_egpm_dominance_ratio']
                                             .transform(lambda x: x.ewm(halflife=5, ignore_na=True).mean()))
+    data['opp_egpm_dominance_ema_after'] = data['opp_egpm_dominance_ema_after'].fillna(0)
 
     data['egpm_dominance_win_perc'] = (data['egpm_dominance_ema_before'] /
                                        (data['egpm_dominance_ema_before'] +
                                         data['opp_egpm_dominance_ema_before']))
     data['egpm_dominance_win_perc'] = data['egpm_dominance_win_perc'].fillna(0.5)
     data['egpm_dominance_diff'] = data['egpm_dominance_ema_before'] - data['opp_egpm_dominance_ema_before']
+
+    # Train Logistic Regression
+    X = data[["egpm_dominance_ema_before", "opp_egpm_dominance_ema_before"]]
+    y = data.result
+
+    clf = LogisticRegression()
+    clf.fit(X, y)
+    #print(clf.score(X, y))
+    probabilities = clf.predict_proba(X)
+    data['egpm_dom_logistic_win_perc'] = probabilities[:, 1]
+
+    # Export Model Pickle File
+    filepath = Path.cwd().parent.joinpath('models', 'egpm_dom_logistic_regression.csv')
+    pickle.dump(clf, open(filepath, 'wb'))
 
     return data
 
