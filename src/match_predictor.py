@@ -216,6 +216,7 @@ def predict(blue_team: str, blue1: str, blue2: str, blue3: str, blue4: str, blue
 
     match = predict_match(blue, red)
     output = pd.concat([output, match], ignore_index=True)
+    output["blue_win_chance"] = output["blue_win_chance"].astype('int32')
 
     if verbose:
         output = output[["blue", "red", "blue_win_chance", "deviation",

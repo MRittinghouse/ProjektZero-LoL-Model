@@ -740,7 +740,7 @@ def egpm_model(data: pd.DataFrame, entity: str) -> pd.DataFrame:
     data['egpm_dom_logistic_win_perc'] = probabilities[:, 1]
 
     # Export Model Pickle File
-    filepath = Path.cwd().parent.joinpath('models', 'egpm_dom_logistic_regression.csv')
+    filepath = Path.cwd().parent.joinpath('models', 'egpm_dom_logistic_regression.pkl')
     pickle.dump(clf, open(filepath, 'wb'))
 
     return data
