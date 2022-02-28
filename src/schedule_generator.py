@@ -8,13 +8,11 @@ from pathlib import Path
 import requests
 from src.team import Team
 from src.match_predictor import predict_match
-import sys
 from typing import Optional
 
 # Variable Definitions
 load_dotenv()
-key = getenv("OE_SCHEDULE_KEY")
-url = getenv("OE_SCHEDULE_URL")
+panda_key = getenv("PANDASCORE_KEY")
 
 
 # Helper/Utility Functions:
@@ -32,7 +30,7 @@ def __team_namer(team_name: str) -> str:
         The correct team name.
     """
 
-    # Misnomers Format: (API Name) : (OE Name)
+    # Misnomers Format: (API Name) : (Flattened Teams Name)
     misnomers = {
         "Schalke 04": "FC Schalke 04 Esports",
         "Edward Gaming": "EDward Gaming",
@@ -41,9 +39,26 @@ def __team_namer(team_name: str) -> str:
         "Thunder Talk Gaming": "ThunderTalk Gaming",
         "NONGSHIM REDFORCE": "Nongshim RedForce",
         "NongShim REDFORCE": "Nongshim RedForce",
+        "Nongshim Red Force": "Nongshim RedForce",
         "EXCEL": "Excel Esports",
         "Dignitas QNTMPAY": "Dignitas",
-        "Immortals Progressive": "Immortals"
+        "Immortals Progressive": "Immortals",
+        "Team SoloMid": "TSM",
+        "Team SoloMid Academy": "TSM Academy",
+        "Team SoloMid Amateur": "TSM Amateur",
+        "BDS": "Team BDS",
+        "BDS Academy": "Team BDS Academy",
+        "INTZ e-Sports": "INTZ",
+        "EDward Gaming Youth Team": "EDG Youth Team",
+        "Istanbul Wildcats": "İstanbul Wildcats",
+        "KaBuM! eSports": "KaBuM! e-Sports",
+        "MAX E-Sports Club": "MAX",
+        "Hive Athens": "Hive Athens EC",
+        "Komil&Friends": "Komil&amp;Friends",
+        "GG&Esports": "GGEsports",
+        "UCAM Esports Club": "UCAM Tokiers",
+        "We Love Gaming": "WLGaming Esports",
+        "⁠Entropiq": "Entropiq",
     }
 
     if team_name in misnomers.keys():
@@ -52,7 +67,7 @@ def __team_namer(team_name: str) -> str:
         return team_name
 
 
-def schedule_predictor(blue_name: str, red_name: str):
+def __schedule_predictor(blue_name: str, red_name: str):
     """
     Parameters
     ----------
@@ -78,23 +93,18 @@ def schedule_predictor(blue_name: str, red_name: str):
 
 
 # Primary Functions
-def upcoming_schedule(leagues: Optional[str],
-                      api_url: str, api_key: str, days: int = 7) -> dict:
+def pandascore_schedule(api_key: str, leagues: Optional[str], days: int) -> pd.DataFrame:
     """
-    Pings an API endpoint to grab a dictionary of upcoming matches.
-    Please note, this API has not yet been released, so if you do not have
-    a valid key, do not try to use this function.
+    Pings the Pandascore API endpoint to grab a dictionary of upcoming matches.
+    The Pandascore API is public and has a free tier, so this is something anyone can use.
+    You are responsible for getting your own key and adding it to your own .env file.
 
     Parameters
     ----------
     leagues : str or list of strings
-        A string or list of strings containing Leagues of interest
-        Valid Leagues are LCS, LEC, LCK, LPL.
-        The API does not support all leagues, stick to the big four.
-    api_url : str
-        The URL of the API to pull data from.
+        An optional string or list of strings containing Leagues of interest. This API supports many leagues.
     api_key : str
-        The private key used to credential your access to the API.
+        The private key used to credential your access to the Pandascore API.
     days : int
         Number of days forward to search for matches (today + X days).
     Returns
@@ -102,18 +112,35 @@ def upcoming_schedule(leagues: Optional[str],
     upcoming : pd.DataFrame
         A Pandas DataFrame with the upcoming matches.
     """
-    # Get API Response
-    headers = {"x-api-key": f"{api_key}"}
-    try:
-        res = requests.get(api_url, headers=headers)
-    except ConnectionError as e:
-        res = {'status_code': e}
+    schedule = []
+    pages = range(1, 6)  # TODO: Make this pull until max date observed instead of a set number of pages.
+    headers = {"Accept": "application/json"}
 
-    # Get Schedule or Error Response
-    if res.status_code == 200:
-        schedule = json.loads(res.text)
-    else:
-        raise ConnectionError(f"Error: {res.status_code}")
+    for i in pages:
+        url = f"https://api.pandascore.co/lol/matches/upcoming?sort=&page={i}&per_page=100&token={api_key}"
+
+        # Make API Request
+        try:
+            res = requests.get(url, headers=headers)
+        except ConnectionError as e:
+            res = {'status_code': e}
+
+        # Get Schedule or Error Response
+        if res.status_code == 200:
+            pandascore_response = json.loads(res.text)
+        else:
+            raise ConnectionError(f"Error: {res.status_code}")
+
+        for match in pandascore_response:
+            try:
+                match_data = {"league": match["league"]["name"],
+                              "Blue": match["opponents"][0]["opponent"]["name"],
+                              "Red": match["opponents"][1]["opponent"]["name"],
+                              "Start (UTC)": match["scheduled_at"],
+                              "Best Of": match["number_of_games"]}
+                schedule.append(match_data)
+            except IndexError:
+                print(match)  # Match does not have opponents yet (e.g. playoffs before teams locked in)
 
     # Filter Schedule of Interest
     if leagues:
@@ -124,18 +151,16 @@ def upcoming_schedule(leagues: Optional[str],
     days = int(days)
     current_date = dt.datetime.now()
     future_date = current_date + dt.timedelta(days=days)
-    tformat = "%Y-%m-%dT%H:%M:%S.%fZ"
+    tformat = "%Y-%m-%dT%H:%M:%SZ"
 
     upcoming = (list(filter(
-        lambda game: future_date >= dt.datetime.strptime(game["startTime"], tformat) >= current_date,
-        schedule)))
+        lambda game: future_date >= dt.datetime.strptime(game["Start (UTC)"], tformat) >= current_date, schedule)))
 
     # If this block of code fails, there's a problem with the team names
     for i in upcoming:
-        if i["team1Code"] == "TBD" or i["team2Code"] == "TBD":
+        if i["Blue"] == "TBD" or i["Red"] == "TBD":
             upcoming.remove(i)
-        i["team1Name"] = __team_namer(i["team1Name"])
-        i["team2Name"] = __team_namer(i["team2Name"])
+        i.update({"Blue": __team_namer(i["Blue"]), "Red": __team_namer(i["Red"])})
 
     upcoming = pd.DataFrame(upcoming)
 
@@ -144,28 +169,21 @@ def upcoming_schedule(leagues: Optional[str],
 
 def main():
     filepath = Path.cwd().parent
+    schedule = pandascore_schedule(leagues=None, api_key=panda_key, days=5)
 
-    matches = upcoming_schedule(leagues=None,
-                                api_url=url, api_key=key,
-                                days=5)
-
-    if isinstance(matches, pd.DataFrame):
-        matches = matches[["league", "team1Name", "team2Name", "startTime", "seriesType"]]
-        matches = matches.rename(columns={'team1Name': 'Blue',
-                                          'team2Name': 'Red',
-                                          'startTime': 'Start (UTC Time)',
-                                          'seriesType': 'Type'})
-        predictions = matches.apply(lambda row: schedule_predictor(row["Blue"], row["Red"]),
-                                    axis=1)
-        matches = pd.concat([matches, predictions], axis=1)
+    if isinstance(schedule, pd.DataFrame):
+        predictions = schedule.apply(lambda row: __schedule_predictor(row["Blue"], row["Red"]), axis=1)
+        matches = pd.concat([schedule, predictions], axis=1)
         matches[["Blue Win%", "Deviation"]] = pd.DataFrame(matches[0].tolist(), index=matches.index).round(4)
         matches = matches.drop(0, axis=1).reset_index(drop=True)
         matches.to_csv(filepath.joinpath('data', 'processed', 'schedule.csv'), index=False)
-        return matches
     else:
-        print("Nothing to see here. Move along.")
+        print("No upcoming Pandascore match data available.")
 
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):
+    start = dt.datetime.now()
     main()
-    print("Schedule generated.")
+    end = dt.datetime.now()
+    elapsed = end - start
+    print(f"Schedule generated in {elapsed}.")

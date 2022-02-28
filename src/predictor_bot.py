@@ -36,8 +36,9 @@ bot = commands.Bot(command_prefix='!')
 async def schedule(ctx, league):
     try:
         output = pd.read_csv(Path.cwd().parent.joinpath('data', 'processed', 'schedule.csv'))
-        output = output[output["league"] == league].drop(['league'], axis=1).reset_index(drop=True)
-        output = f"Upcoming {league} Games (Next 10 Games Within 5 Days): \n \n" \
+        lower_league = league.lower()
+        output = output[output["league"].str.lower() == lower_league].drop(['league'], axis=1).reset_index(drop=True)
+        output = f"Upcoming {league} Games (Next 10 Matches Within 5 Days): \n \n" \
                  f"`{output.head(10).to_markdown()}` \n \n" \
                  "`NOTE: Predictions use the last fielded roster. Try !predict if you need substitutions.`\n" \
                  "`NOTE: Win percentages are for Bo1 format. Use the !best_of to get Bo3/Bo5 odds if needed.`"

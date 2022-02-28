@@ -26,6 +26,7 @@ pd.set_option("display.max_rows", None, "display.max_columns", None)
 filepath = Path.cwd().parent.joinpath('models', 'egpm_dom_logistic_regression.csv')
 egpm_model = pickle.load(open(filepath, 'rb'))
 
+
 def predict_match(blue: Team, red: Team) -> pd.DataFrame:
     def standard_prediction(blue_stat: float, red_stat: float) -> float:
         blue_win_perc = (blue_stat / (blue_stat + red_stat))
@@ -216,7 +217,7 @@ def predict(blue_team: str, blue1: str, blue2: str, blue3: str, blue4: str, blue
 
     match = predict_match(blue, red)
     output = pd.concat([output, match], ignore_index=True)
-    output["blue_win_chance"] = output["blue_win_chance"].astype('int32')
+    output["blue_win_chance"] = output["blue_win_chance"].astype('float')
 
     if verbose:
         output = output[["blue", "red", "blue_win_chance", "deviation",
